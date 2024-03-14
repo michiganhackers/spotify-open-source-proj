@@ -1,0 +1,1 @@
+/* API endpoint for connecting to a session */

@@ -1,8 +1,44 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+
+# Spotify Shared Sessions Application
+
+## Prerequisites
+1. **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** installed on your system
+2. Access to a Spotify Premium account (Spotify API Player calls require this)
 
 ## Getting Started
 
-First, run the development server:
+To begin, clone the official github repository
+> git clone https://github.com/michiganhackers/spotify-open-source-proj.git
+
+or navigate to your local repository and pull latest changes.
+
+### PostgreSQL Setup
+Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) if you don't already have it installed.
+
+Locally install postgres:14.5 on your machine by running:
+
+> **docker pull postgres:14.5**
+
+Make sure your path is set to the top level of this directory, then run **pg_startup.sh** in your terminal using:
+
+> **./pg_startup.sh**
+
+If you are getting 
+> **bash: Permission Denied**
+
+try running 
+> **chmod +x pg_startup.sh**.
+
+Then rerun
+> **./pg_startup.sh**
+
+This should spin up a docker container preset for postgresql that you will use for development of the application.
+
+**More setup instructions to come once database schema is created**
+
+### Next.js Application Setup
+
+To run the development server:
 
 ```bash
 npm run dev
@@ -16,21 +52,3 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
