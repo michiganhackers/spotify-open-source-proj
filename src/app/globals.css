@@ -31,3 +31,84 @@ body {
     text-wrap: balance;
   }
 }
+
+input[type=text] {
+  color: black;
+  border: solid rgb(22, 101, 22);
+  border-radius: 10px;
+  outline: none; 
+  transition: border-color 0.2s ease;
+  text-align: center;
+}
+
+input[type=text]:focus {
+  color: black;
+  border: solid rgb(35, 187, 35);
+  border-radius: 10px;
+}
+
+input[type=button]{
+  color: green;
+}
+
+
+/*Desktop&Mac Specific*/
+@media only screen and (min-width: 1290px) {
+  /* .guestoptions {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .hostoptions {
+    display: inline-block;
+    vertical-align: middle;
+  } */
+  .options {
+    display: flex; /* Use flexbox */
+    justify-content: space-between; /* Space items evenly */
+  }
+  
+}
+
+/*Mobile Specific*/
+@media only screen and (max-width: 1290px) {
+  .divideDiv {
+    margin: 20px;
+    padding: 10px;
+    border: 1px solid black;
+  }
+  
+}
+
+
+
+
+.heading{
+  line-height: 200px;
+  height: 200px;
+  border: 3px solid red;
+  text-align: center;
+}
+
+.heading p {
+  line-height: 1.5;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.guestoptions{
+  text-align: center;
+}
+
+.hostoptions{
+  text-align: center;
+}
+
+.divider {
+  border: none;
+  height: 2px; /* Adjust the height of the line */
+  background-color: green; /* Adjust the color of the line */
+}
+
+.SubmitButton{
+  background-color: green;
+}
