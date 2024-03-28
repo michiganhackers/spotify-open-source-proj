@@ -15,9 +15,11 @@ or navigate to your local repository and pull latest changes.
 ### PostgreSQL Setup
 Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) if you don't already have it installed.
 
-Locally install postgres:14.5 on your machine by running:
+Pull the official docker image of postgres version 14.5 on your machine by running:
 
 > **docker pull postgres:14.5**
+
+Create a .env file at the top level of your directory and store environment variables for PG_USER and PG_PASSWORD.
 
 Make sure your path is set to the top level of this directory, then run **pg_startup.sh** in your terminal using:
 
@@ -33,8 +35,6 @@ Then rerun
 > **./pg_startup.sh**
 
 This should spin up a docker container preset for postgresql that you will use for development of the application.
-
-**More setup instructions to come once database schema is created**
 
 ### Next.js Application Setup
 

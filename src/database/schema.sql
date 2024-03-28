@@ -1,22 +1,30 @@
 
 CREATE TABLE session (
-    PRIMARY KEY session_id varchar(8),
-    FOREIGN KEY host_id INT,
+    session_id varchar(8),
+    host_id INT,
     access_token varchar(255),
-    refresh_token varchar(255)
+    refresh_token varchar(255),
+    PRIMARY KEY (session_id)
 );
 
 CREATE TABLE users (
-    FOREIGN KEY session_id varchar(8),
-    PRIMARY KEY user_id INT NOT NULL AUTO_INCREMENT,
-    username varchar(255)
+    session_id varchar(8),
+    user_id SERIAL,
+    username varchar(255),
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (session_id) REFERENCES session(session_id)
 );
 
 CREATE TABLE queues (
     song varchar(255),
     artist varchar(255),
     album_cover varchar(255),
-    song_id INT NOT NULL AUTO_INCREMENT,
-    FOREIGN KEY session_id varchar(8),
-    FOREIGN KEY added_by INT
+    song_id INT NOT NULL,
+    session_id varchar(8),
+    added_by INT,
+    FOREIGN KEY (session_id) REFERENCES session(session_id),
+    FOREIGN KEY (added_by) REFERENCES users(user_id)
 );
+
+ALTER TABLE session ADD CONSTRAINT fk_session_host_id
+    FOREIGN KEY (host_id) REFERENCES users(user_id);
