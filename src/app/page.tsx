@@ -14,12 +14,11 @@ export default function Home() {
   
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <p>Welcome to [insert name here]</p>
       <img src="GMJ-emblem-color.svg" alt="" />
       <div className="options">
         <div className="hostoptions">
             <h1>I'm a host:</h1>
-            <button className="SubmitButton"> Host </button>
+            <button className="SubmitButton"> Host a Jam </button>
         </div>
         <div className="divideDiv">
         <hr className="divider"></hr>
@@ -40,13 +39,13 @@ export default function Home() {
 async function connectToSession(guestCode : string) : Promise<void> {
   console.log(guestCode);  
   try {
-     await fetch('api/sessionDB/connect', {
+    await fetch('api/sessionDB/connect', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-         guestCode: guestCode
+          guestCode: guestCode
       }),
     });
   }
