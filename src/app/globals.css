@@ -51,6 +51,17 @@ input[type=button]{
   color: green;
 }
 
+.hostoptions{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+}
+
+.guestoptions{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+}
 
 /*Desktop&Mac Specific*/
 @media only screen and (min-width: 1290px) {
@@ -64,7 +75,10 @@ input[type=button]{
   } */
   .options {
     display: flex; /* Use flexbox */
-    justify-content: space-between; /* Space items evenly */
+    justify-content: center;
+  }
+  .options div{
+    padding: 10px;
   }
   
 }
