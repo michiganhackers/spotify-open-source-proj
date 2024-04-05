@@ -60,3 +60,37 @@ export async function CreateSession(
 
     return code;
 }
+
+// RETURNS: list of users in the session including hosts name
+//          sorted queue of all the songs in the session and their properties
+export async function GetSessionData(sessionId : string) : Promise<any> {
+
+    const hostId : any[] = await sql`
+        SELECT host_id FROM session
+        WHERE session.session_id = ${sessionId}
+    `
+
+    if(hostId.length < 1) { // If no session exists
+        throw new Error("Wrong guest code")
+    }
+
+    const hostName : any[] = await sql`
+        SELECT username FROM users
+        WHERE users.user_id = ${hostId}
+    `
+
+    const clientNames : any[] = await sql`
+        SELECT username FROM users
+        WHERE users.session_id = ${sessionId} AND users.user_id <> ${hostId}
+    `
+
+    // Returns queue in sorted order
+    const queue : any[] = await sql`
+        SELECT q.song, q.artist, q.album_cover, q.song_id, q.added_by
+        FROM queues q
+        WHERE q.session_id = ${sessionId}
+        ORDER BY song_id
+    `
+    
+    return {hostName: hostName[0], clientNames: clientNames, queue: queue}; // Return an object containing the hosts user name
+}

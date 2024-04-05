@@ -1,6 +1,6 @@
 /* API endpoint for connecting to a session */
 import { redirect } from 'next/navigation'
-import { connectToSession } from '../../../../database/db'
+import { ConnectToSession } from '../../../../database/db'
 
 export async function POST(req: Request) {
     const data = await req.json();
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     // TODO: Create database handler that sends user information to database to be added to session
     
-    const sessionData = await connectToSession(guestCode);
+    const sessionData = await ConnectToSession(guestCode);
     
     // If passes all checks, redirect to session page
     redirect('/session');
