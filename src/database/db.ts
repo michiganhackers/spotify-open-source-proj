@@ -1,7 +1,47 @@
 import postgres from 'postgres'
 import 'dotenv/config'
+import { RSC_ACTION_CLIENT_WRAPPER_ALIAS } from 'next/dist/lib/constants'
 
 const sql = postgres(process.env.POSTGRES_URI!) // will use psql environment variables
+
+export async function CreateUser(
+    username : string,
+    sessionID? : string) : Promise<any> {
+    
+    // Insert new user into DB
+    const user = {
+        "session_id": sessionID ? sessionID : "NULL",
+        "username": username
+    }
+
+    const users : any[] = await sql`
+        SELECT * FROM users
+        WHERE username = ${username}
+    `
+
+    if (users.length > 0) {
+        for (let i = 0; i < users.length; i++) {
+            let session = users[i]['session_id']
+            if (session === sessionID || session === "NULL") {
+                throw new Error("User in this session already exists.")
+            }
+    }
+
+    await sql`
+    INSERT INTO users
+    VALUES (${sql(user)})
+    `
+
+    // Get the user ID of the newly created user
+    const userID = await sql`
+        SELECT user_id FROM users
+        WHERE username = ${user['username']}
+        AND session_id = ${user['session_id']}
+    `
+
+    // Return the user ID of newly created user
+    return userID[0]['user_id'];
+}
 
 export async function ConnectToSession(guestCode : string) : Promise<any> {
     const session : any[] = await sql`
@@ -56,6 +96,13 @@ export async function CreateSession(
     await sql`
     INSERT INTO sessions
     VALUES (${sql(session)})
+    `
+
+    // Update host's user entry with session ID
+    await sql`
+    UPDATE users
+    SET session_id = ${code}
+    WHERE user_id = ${hostID}
     `
 
     return code;
