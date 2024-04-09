@@ -25,6 +25,7 @@ export async function CreateUser(
             if (session === sessionID || session === "NULL") {
                 throw new Error("User in this session already exists.")
             }
+        }
     }
 
     await sql`
@@ -43,17 +44,17 @@ export async function CreateUser(
     return userID[0]['user_id'];
 }
 
-export async function ConnectToSession(guestCode : string) : Promise<any> {
-    const session : any[] = await sql`
-        SELECT session FROM sessions
-        WHERE session.session_id = ${guestCode}
+export async function VerifyGuestCode(guestCode : string) : Promise<any> {
+    const sid : any[] = await sql`
+        SELECT session_id FROM sessions
+        WHERE session_id = ${guestCode}
     `
 
-    if(session.length < 1) { // ERROR: No guest code that matches
+    if(sid.length < 1) { // ERROR: No guest code that matches
         throw new Error("Wrong guest code");
     }
 
-    return session[0]; // Return the session as an object (maybe only need to return the session_id)
+    return sid[0]; // Return the session id
 }
 
 export async function CreateSession(
@@ -65,7 +66,8 @@ export async function CreateSession(
     const codes : any[] = await sql`
         SELECT session_id FROM sessions
     `
-
+    
+    // TODO: Consider hashing or encrypting the created code to improve security
     function CreateCode() {
         // Generates a new code
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -110,11 +112,11 @@ export async function CreateSession(
 
 // RETURNS: list of users in the session including hosts name
 //          sorted queue of all the songs in the session and their properties
-export async function GetSessionData(sessionId : string) : Promise<any> {
+export async function GetSessionData(sid : string) : Promise<any> {
 
     const hostId : any[] = await sql`
         SELECT host_id FROM session
-        WHERE session.session_id = ${sessionId}
+        WHERE session.session_id = ${sid}
     `
 
     if(hostId.length < 1) { // If no session exists
@@ -128,16 +130,54 @@ export async function GetSessionData(sessionId : string) : Promise<any> {
 
     const clientNames : any[] = await sql`
         SELECT username FROM users
-        WHERE users.session_id = ${sessionId} AND users.user_id <> ${hostId}
+        WHERE users.session_id = ${sid} AND users.user_id <> ${hostId}
     `
 
     // Returns queue in sorted order
     const queue : any[] = await sql`
-        SELECT q.song, q.artist, q.album_cover, q.song_id, q.added_by
+        SELECT q.song_name, q.artist_name, q.album_cover, q.placement, q.added_by
         FROM queues q
-        WHERE q.session_id = ${sessionId}
+        WHERE q.session_id = ${sid}
         ORDER BY song_id
     `
     
     return {hostName: hostName[0], clientNames: clientNames, queue: queue}; // Return an object containing the hosts user name
 }
+
+
+export async function GetAccessToken(sid : string) : Promise<any> {
+    const token = await sql`
+        SELECT access_token FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    if(token.length < 1) {
+        throw Error("Undefined session id")
+    }
+
+    return token[0];
+}
+
+
+export async function AddSongToQueue(
+    songId : string, songName : string,
+    albumCover : string, artistName : string,
+    placement : string, addedBy : string, sid : string) : Promise<void> {
+
+    const song = {
+        song_id: songId,
+        song_name: songName,
+        album_cover: albumCover,
+        artist_name: artistName,
+        placement: placement,
+        added_by: addedBy,
+        session_id: sid
+    }
+
+    // Create new song entry in queues with given params
+    await sql`
+        INSERT INTO queues 
+        VALUES (${sql(song)})
+    `
+}
+    

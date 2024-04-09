@@ -16,10 +16,10 @@ CREATE TABLE users (
 );
 
 CREATE TABLE queues (
-    song varchar(255),
-    artist varchar(255),
+    song_name varchar(255),
+    artist_name varchar(255),
     album_cover varchar(255),
-    song_id INT NOT NULL,
+    placement INT NOT NULL,
     session_id varchar(8),
     added_by INT,
     FOREIGN KEY (session_id) REFERENCES session(session_id),

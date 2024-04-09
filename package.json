@@ -2,6 +2,7 @@
   "name": "spotify-os-proj",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +16,9 @@
     "postgres": "^3.4.3",
     "react": "^18",
     "react-dom": "^18",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/node": "^20",

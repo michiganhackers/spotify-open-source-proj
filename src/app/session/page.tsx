@@ -2,17 +2,43 @@
 import { TemplateContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 
+export default function Session() {
 
-export function Song({ url }: { url: string }) {
-  const [songName, setSongName] = useState("");
-  const [addedBy, setAddedBy] = useState("");
-  const [coverArtFile, setCoverArtFile] = useState("");
-  const [artistName, setArtistName] = useState("");
-  const [loadingStatus, setLoadingStatus] = useState(true);
+    const [isHost, setHost] = useState(sessionStorage.getItem("isHost") === "true" ? true : false);
 
-  useEffect(() => {
+    const SERVER = "localhost:3000";
+    const socket = io(SERVER, {
+        auth: {   
+            token: sessionStorage.getItem("sid")
+        }
+    }); // Initialize the client-side websocket
+
+    var hostName, clientNames, queue;
+    socket.on("initSession", (data) => {
+        // Populate UI with initial session state
+        hostName = data.hostName;
+        clientNames = data.clientNames;
+        queue = data.queue;
+    })
+
+    if(isHost)
+        return <SessionHost />;
+    else
+        return <SessionGuest />;
+}
+
+export function Song(songProps : {name: string, user : string, coverArtURL : string, artistName : string}) {
+  const [songName, setSongName] = useState(songProps.name);
+  const [addedBy, setAddedBy] = useState(songProps.user);
+  const [coverArtFile, setCoverArtFile] = useState(songProps.coverArtURL);
+  const [artistName, setArtistName] = useState(songProps.artistName);
+  // const [loadingStatus, setLoadingStatus] = useState(true);
+
+/*  useEffect(() => {
     let ignoreStaleRequest = false;
+    // Might need to change below fetch to server run to use access token
     fetch(url, { credentials: "same-origin" })
       .then((response) => {
         if (!response.ok) throw Error(response.statusText);
@@ -32,7 +58,7 @@ export function Song({ url }: { url: string }) {
     return () => {
       ignoreStaleRequest = true;
     };
-  }, [url]);
+  }, [url]); */
 
   return (
     <div className="song">
@@ -71,6 +97,18 @@ function Queue(){
     //   addSongToQueue(data);  
     // })
     // .catch((error) => console.log(error));
+    fetch('api/spotify/addSong', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            url: songInput,
+            sid: sessionStorage.getItem("sid"),
+            addedBy: null, // TODO
+            qlen: songList.length
+        })
+    })
     addSongToQueue(songInput);
     setSongInput("");
   };
@@ -128,3 +166,19 @@ function SessionGuest() {
     </>
   );
 }
+
+
+// TODO: Add host components where necessary
+function SessionHost() {
+    return (
+      <>
+        <div id="header">
+          <button>End Session</button>
+          <h1>Host Username</h1>
+        </div>
+        <div id="QueueInterface">
+          <Queue/>  
+        </div>
+      </>
+    );
+  }
