@@ -35,13 +35,13 @@ export async function CreateUser(
 
     // Get the user ID of the newly created user
     const userID = await sql`
-        SELECT user_id FROM users
+        SELECT user_id, user_name FROM users
         WHERE username = ${user['username']}
         AND session_id = ${user['session_id']}
     `
 
     // Return the user ID of newly created user
-    return userID[0]['user_id'];
+    return userID[0]['user_id'], userID[0]['user_name'];
 }
 
 export async function VerifyGuestCode(guestCode : string) : Promise<any> {
@@ -135,7 +135,7 @@ export async function GetSessionData(sid : string) : Promise<any> {
 
     // Returns queue in sorted order
     const queue : any[] = await sql`
-        SELECT q.song_name, q.artist_name, q.album_cover, q.placement, q.added_by
+        SELECT q.song_name, q.artist_name, q.album_cover, q.placement, q.added_by, q.spotify_url
         FROM queues q
         WHERE q.session_id = ${sid}
         ORDER BY song_id
@@ -162,7 +162,7 @@ export async function GetAccessToken(sid : string) : Promise<any> {
 export async function AddSongToQueue(
     songId : string, songName : string,
     albumCover : string, artistName : string,
-    placement : string, addedBy : string, sid : string) : Promise<void> {
+    placement : string, addedBy : string, sid : string, url: string) : Promise<void> {
 
     const song = {
         song_id: songId,
@@ -171,13 +171,22 @@ export async function AddSongToQueue(
         artist_name: artistName,
         placement: placement,
         added_by: addedBy,
-        session_id: sid
+        session_id: sid,
+        spotify_url: url
     }
 
     // Create new song entry in queues with given params
     await sql`
         INSERT INTO queues 
         VALUES (${sql(song)})
+    `
+}
+
+
+export async function GetUserName(sid : string) : Promise<any> {
+    const username = await sql`
+        SELECT user_name FROM users
+        WHERE 
     `
 }
     

@@ -10,7 +10,7 @@ const io = new Server({
 io.on("connection", (socket) => {
     // Add user to the database (call CreateUser function from db.ts)
     const sid : string = socket.handshake.auth.token;  
-
+    
     // Add user to the room (session) in which they want to connect
     socket.join(sid);
 
@@ -25,5 +25,10 @@ io.on("connection", (socket) => {
     // Emits an initSession event listener for the client to listen for
     socket.emit("initSession", sessionData);
 });
+
+
+io.on("sendSongToSocket", (songData) => {
+    io.to(songData.sid).emit("addSongToUI", songData)
+})
 
 io.listen(8080);

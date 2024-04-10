@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         return response.json();
     })
     .then((data) => {
-        // TODO: Get all the relevant data from the returned JSON
+        //  Get all the relevant data from the returned JSON
         const songId = data.id
         const songName = data.name
         const albumCover = data.album.images[0].url
@@ -35,8 +35,9 @@ export async function POST(req: Request) {
         const placement = reqData.qlen + 1
         const addedBy = reqData.addedBy
         
-
         // Add song details to queue in the database
-        AddSongToQueue(songId, songName, albumCover, artistName, placement, addedBy, sid);
+        AddSongToQueue(songId, songName, albumCover, artistName, placement, addedBy, sid, url);
+
+        return { songId, songName, albumCover, artistName, placement, addedBy }
     })
 }

@@ -22,6 +22,7 @@ CREATE TABLE queues (
     placement INT NOT NULL,
     session_id varchar(8),
     added_by INT,
+    spotify_url varchar(255),
     FOREIGN KEY (session_id) REFERENCES session(session_id),
     FOREIGN KEY (added_by) REFERENCES users(user_id)
 );
