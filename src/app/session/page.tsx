@@ -6,7 +6,7 @@ import { Socket } from "socket.io";
 import { io } from "socket.io-client";
 
 
-const SERVER = "localhost:3000";
+const SERVER = "localhost:8080";
 const socket = io(SERVER, {
     auth: {   
         token: sessionStorage.getItem("sid")
@@ -92,7 +92,7 @@ function Queue(queue : any){
   const [songList, setSongList] = useState<any[]>([]);
 
   for(let i = 0; i < queue.length; i++) { // Initialize starting queue from connection
-     setSongList((prevSongs) => [...prevSongs, queue[0].url]);
+     setSongList((prevSongs) => [...prevSongs, queue[i]]);
   }
 
   socket.on("addSongToUI", (songData) => {
