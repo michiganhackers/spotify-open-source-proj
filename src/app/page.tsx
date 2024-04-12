@@ -13,7 +13,7 @@ export default function Home() {
 
   const handleLogin = () => {
     var client_id = 'c1aa1eb2682247c4a3b964477b701969'; // Andrew's client code for testing
-    var redirect_uri = 'http://localhost:3000/callback'
+    var redirect_uri = 'http://localhost:3000/api/spotify/getToken'
   
     // var state = generateRandomString(16);
     var scope = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
