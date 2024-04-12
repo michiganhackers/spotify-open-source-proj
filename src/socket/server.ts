@@ -20,10 +20,11 @@ io.on("connection", (socket) => {
         sessionData = { hostName: data.hostName,
                      clientNames: data.clientNames, 
                      queue: data.queue };
+                     
+        console.log(sessionData);
+        // Emits an initSession event listener for the client to listen for
+        socket.emit("initSession", sessionData);
     })
-
-    // Emits an initSession event listener for the client to listen for
-    socket.emit("initSession", sessionData);
 });
 
 

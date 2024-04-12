@@ -27,6 +27,7 @@ export default function Home() {
       })}`
   }
   
+  // TODO: Add input for username for both host and guest options
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <img src="GMJ-emblem-color.svg" alt="" />

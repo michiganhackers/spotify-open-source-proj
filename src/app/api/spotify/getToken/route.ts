@@ -34,7 +34,14 @@ export async function GET(req: Request) {
         return response.json();
     }).then((data) => {
         const { access_token, refresh_token } = data;
-        fetch('/api/sessionDB/create', { body: data });
+        console.log(process.env.APP_SERVER);
+        fetch(process.env.APP_SERVER + '/api/sessionDB/create', { 
+            method: 'POST',
+            body: JSON.stringify({
+                accessToken: access_token,
+                refreshToken: refresh_token
+            }) 
+        });
     });
 
     redirect('/session');
