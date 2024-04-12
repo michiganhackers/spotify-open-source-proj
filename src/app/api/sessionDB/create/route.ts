@@ -4,7 +4,6 @@ import { CreateSession, CreateUser } from "@/src/database/db";
 
 export async function POST(req: Request) {
     const data = await req.json();
-    const guestCode : string = data.guestCode;
     const accessToken : string = data.accessToken;
     const refreshToken : string = data.refreshToken;
     
