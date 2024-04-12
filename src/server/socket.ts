@@ -31,4 +31,8 @@ io.on("sendSongToSocket", (songData) => {
     io.to(songData.sid).emit("addSongToUI", songData)
 })
 
+io.on("sendSongsToSearch", (songData) => {
+    io.to(songData.sid).emit("addSongToUI", songData)
+})
+
 io.listen(8080);

@@ -90,6 +90,7 @@ function Queue(queue : any){
   // Function body
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
+  const [songQuery, setSongQuery] = useState<any[]>([]);
 
   for(let i = 0; i < queue.length; i++) { // Initialize starting queue from connection
      setSongList((prevSongs) => [...prevSongs, queue[i]]);
@@ -106,7 +107,7 @@ function Queue(queue : any){
   };
 
   // Handles song submission then clears input
-  const handleAddSong = () => {
+  const handleAddSong = (songToBeAdded : string) => {
     // TODO: Make this a fetch of the song's url instead of adding directly
     // fetch(songInput, { credentials: "same-origin" })
     // .then((response) => {
@@ -123,7 +124,7 @@ function Queue(queue : any){
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            url: songInput,
+            url: "https://api.spotify.com/v1/tracks/"+songToBeAdded,
             sid: sessionStorage.getItem("sid"),
             addedBy: sessionStorage.getItem("username"),
             qlen: songList.length
@@ -149,19 +150,39 @@ function Queue(queue : any){
 
   // Can be used to have song "suggestions" for similar song names later
   const searchSongs = (input: string) => {
-    let temp = [];
+    
+    if(input === ""){
+      return;
+    }
+    setSongQuery([]);
     // Requests all similar song names
-    // fetch(songInput, { credentials: "same-origin" })
-    // .then((response) => {
-    //   if (!response.ok) throw Error(response.statusText);
-    //   return response.json();
-    // })
-    // .then((data) => {
-    //   temp = data;
-    //   /*implement way to display options*/
-    // })
-    // .catch((error) => console.log(error));
-    setSongInput(input);
+    fetch('api/spotify/searchSongs', { // Adds song to the database
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+          songName: input,
+          sid: sessionStorage.getItem("sid"),
+     })
+    }).then((response) => {
+        if (!response.ok) throw Error(response.statusText);
+        return response.json();
+    }).then((data) => {
+        // Update the UI of all other clients
+        const songs = Object.keys(data).map((key) => {
+          const songProps = {  
+            name: data[key].songName,
+            user: "",
+            coverArtURL: data[key].albumCover,
+            artistName: data[key].artistName,
+          };
+          return <form onSubmit={(e) => {e.preventDefault(); addSongToQueue(data[key].songId);} }>
+                  <button type="submit"><Song key={key} {...songProps}/></button>;
+                 </form>
+        });
+        setSongQuery(prevSongQuery => prevSongQuery.concat(songs));
+    }).catch((error) => console.log(error))
   }
 
   return (
@@ -183,8 +204,20 @@ function Queue(queue : any){
           value={songInput}
           onChange={(e) => searchSongs(e.target.value)}
         />
-        <button onClick={handleAddSong}>Add</button>
+        <div id="dropdown">
+          {songQuery.map((song, index) => (
+          <div key={index}>
+            <Song 
+              name={song.songName}
+              user={""}
+              coverArtURL={song.albumCover}
+              artistName={song.artistName}
+            />
+          </div>
+        ))}
+        </div>
       </div>
+      
     </div>
   );
 }
