@@ -38,6 +38,7 @@ export async function GET(req: Request) {
         fetch(process.env.APP_SERVER + '/api/sessionDB/create', { 
             method: 'POST',
             body: JSON.stringify({
+                username : "", // TODO
                 accessToken: access_token,
                 refreshToken: refresh_token
             }) 
