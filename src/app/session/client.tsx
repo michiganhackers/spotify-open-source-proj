@@ -60,8 +60,13 @@ function Queue({ queue, socket } : { queue : any[], socket : any}){
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
 
-  for(let i = 0; i < queue.length; i++) { // Initialize starting queue from connection
-     setSongList((prevSongs) => [...prevSongs, queue[i]]);
+  if (queue && queue.length > 0) {
+    for (let i = 0; i < queue.length; i++) {
+      setSongList((prevSongs) => [...prevSongs, queue[i]]);
+    }
+  }
+  else{
+    queue = [];
   }
 
   socket.on("addSongToUI", (songData : any) => {
@@ -109,10 +114,11 @@ function Queue({ queue, socket } : { queue : any[], socket : any}){
 
   // Can be used to have song "suggestions" for similar song names later
   const searchSongs = (input: string) => {
-    
+    setSongInput(input);
     if(input === ""){
       return;
     }
+    
     setSongQuery([]);
     // Requests all similar song names
     fetch('api/spotify/searchSongs', { // Adds song to the database
@@ -184,12 +190,18 @@ function Queue({ queue, socket } : { queue : any[], socket : any}){
 
 // SessionGuest component is now the source of truth for the queue of songs
 function SessionGuest( {hostName, clientNames, queue, username, socket } : any ) {
+  const queryString = window.location.search;
+  const searchParams = new URLSearchParams(queryString);
+  const user = searchParams.get('username');
   return (
     <>
-      <div id="header">
-        <button>Exit</button>
-        <h1>{username}</h1>
-        <h1>${hostName}</h1>
+      
+      <div className="container">
+          <div className="header">
+          <button className="SubmitButton">Exit</button>
+          <h1>User: {user}</h1>
+          <h1>Host: {hostName}</h1>
+        </div>
       </div>
       <div id="QueueInterface">
         <Queue
