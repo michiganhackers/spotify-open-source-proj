@@ -60,6 +60,8 @@ function Queue({ queue, socket } : { queue : any[], socket : any}){
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
 
+  console.log(queue);
+
   for(let i = 0; i < queue.length; i++) { // Initialize starting queue from connection
      setSongList((prevSongs) => [...prevSongs, queue[i]]);
   }
