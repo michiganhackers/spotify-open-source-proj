@@ -1,7 +1,7 @@
 'use client'
 import { stringify } from 'querystring';
 import { useState, useEffect } from 'react';
-
+require('dotenv').config();
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState("");
@@ -13,18 +13,19 @@ export default function Home() {
   }, []); // Empty dependency array ensures the effect runs only once on mount
 
   const handleSpotifyAuth = () => {
-    var client_id = 'c1aa1eb2682247c4a3b964477b701969'; // Andrew's client code for testing
+    var client_id = "7427c1385e5941aea9bd97ab44b76ae0"; // Ashton's client code for testing
     var redirect_uri = 'http://localhost:3000/api/spotify/getToken'
   
     // var state = generateRandomString(16);
     var scope = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
+    // var state = username;
   
     window.location.href = `https://accounts.spotify.com/authorize?${stringify({
         response_type: 'code',
         client_id: client_id,
         scope: scope,
         redirect_uri: redirect_uri,
-        // state: state
+        // state: state // state represents the hosts username here
       })}`
   }
   
@@ -38,7 +39,13 @@ export default function Home() {
             <form data-testid="host-form">
                 <input type="text" placeholder='Username' maxLength={6} name="username" onChange={(e) => setUsername(e.target.value)}/>
             </form>
-            <button className="SubmitButton" onClick={() => {setUsernameCookie(username); handleSpotifyAuth()}}> Host a Jam </button>
+            <button className="SubmitButton" onClick={() => {
+                sessionStorage.setItem("username", username);
+                sessionStorage.setItem("isHost", "true");
+                handleSpotifyAuth()
+                }}>
+                Host a Jam
+            </button>
         </div>
         <div className="divideDiv">
         <hr className="divider"></hr>
@@ -50,7 +57,12 @@ export default function Home() {
                 <input type="text" placeholder='Guest Code' maxLength={6} name="guestcode"  onChange={(e) => setGuestCode(e.target.value.toUpperCase())}/>
                 <input type="text" placeholder='Username' maxLength={25} name="username" onChange={(e) => setUsername(e.target.value)}/>
             </form>
-            <button className="SubmitButton" onClick={() => {connectToSession(guestCode, username)}}>Join</button>
+            <button className="SubmitButton" onClick={() => {
+                sessionStorage.setItem("username", username);
+                sessionStorage.setItem("isHost", "true");
+                connectToSession(guestCode, username)}}>
+                    Join
+            </button>
         </div>
       </div>
     </main>
@@ -72,19 +84,7 @@ async function connectToSession(guestCode : string, username : string) : Promise
   }
   catch(e){
     // Add some error message to user saying that wrong code was entered
+    
   }
 }
 
-// Sets a server-side cookie to be used eventually in api/sessionDB/create
-async function setUsernameCookie(username : string) {
-    await fetch('api/sessionDB/setCookie', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            key: 'username',
-            value: username
-        }),
-    });
-}

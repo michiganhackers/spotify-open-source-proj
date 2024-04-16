@@ -10,12 +10,13 @@ const io = new Server({
 io.on("connection", (socket) => {
     // Add user to the database (call CreateUser function from db.ts)
     const sid : string = socket.handshake.auth.token;  
+    console.log(sid)
     
     // Add user to the room (session) in which they want to connect
     socket.join(sid);
 
     // Send all of the session data to the client so that their UI may be updated (call GetSessionData from db.ts)
-    var sessionData : {hostName: string, clientNames : string[], queue : any};
+    var sessionData : {hostName: string, clientNames : string[], queue : any[]};
     GetSessionData(sid).then((data : any) => {
         sessionData = { hostName: data.hostName,
                      clientNames: data.clientNames, 

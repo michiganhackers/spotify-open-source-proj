@@ -2,15 +2,16 @@ import postgres from 'postgres'
 import 'dotenv/config'
 import { RSC_ACTION_CLIENT_WRAPPER_ALIAS } from 'next/dist/lib/constants'
 
-const sql = postgres(process.env.POSTGRES_URI!) // will use psql environment variables
+const sql = postgres(process.env.PG_URI!) // will use psql environment variables
 
 export async function CreateUser(
     username : string,
-    sessionID? : string) : Promise<any> {
+    sessionID : string,
+    isHost: boolean) : Promise<any> {
     
     // Insert new user into DB
-    const user = {
-        "session_id": sessionID ? sessionID : "NULL",
+    const userData = {
+        "session_id": sessionID,
         "username": username
     }
 
@@ -28,20 +29,32 @@ export async function CreateUser(
         }
     }
 
+    // Insert hosts user to database
     await sql`
-    INSERT INTO users
-    VALUES (${sql(user)})
+    INSERT INTO users (session_id, username)
+    VALUES (${userData.session_id}, ${userData.username})
     `
 
     // Get the user ID of the newly created user
-    const userID = await sql`
-        SELECT user_id, user_name FROM users
-        WHERE username = ${user['username']}
-        AND session_id = ${user['session_id']}
+    // BUG: When creating host user no session id present, thus query fails
+    // SOLUTION: ensure session id is present when querying 
+    const user : any[] = await sql`
+        SELECT user_id, username FROM users
+        WHERE username = ${userData['username']}
+        AND session_id = ${userData['session_id']}
     `
 
+    // Update the host_id of the session with newly created host user
+    if(isHost) {
+        await sql`
+            UPDATE sessions
+            SET host_id = ${user[0].user_id}
+            WHERE session_id = ${sessionID}
+        `
+    }
+
     // Return the user ID of newly created user
-    return userID[0]['user_id'], userID[0]['user_name'];
+    return user[0]['user_id'], user[0]['user_name'];
 }
 
 export async function VerifyGuestCode(guestCode : string) : Promise<any> {
@@ -58,7 +71,6 @@ export async function VerifyGuestCode(guestCode : string) : Promise<any> {
 }
 
 export async function CreateSession(
-    hostID : number,
     accessToken : string,
     refreshToken : string) : Promise<any> {
 
@@ -91,22 +103,14 @@ export async function CreateSession(
     // Insert new session into DB
     const session = {
         "session_id": code,
-        "host_id": hostID,
         "access_token": accessToken,
         "refresh_token": refreshToken
     }
-    await sql`
-    INSERT INTO sessions
-    VALUES (${sql(session)})
-    `
 
-    // Update host's user entry with session ID
     await sql`
-    UPDATE users
-    SET session_id = ${code}
-    WHERE user_id = ${hostID}
+    INSERT INTO sessions (session_id, access_token, refresh_token)
+    VALUES (${code}, ${accessToken}, ${refreshToken})
     `
-
     return code;
 }
 
@@ -115,8 +119,8 @@ export async function CreateSession(
 export async function GetSessionData(sid : string) : Promise<any> {
 
     const hostId : any[] = await sql`
-        SELECT host_id FROM session
-        WHERE session.session_id = ${sid}
+        SELECT host_id FROM sessions
+        WHERE session_id = ${sid}
     `
 
     if(hostId.length < 1) { // If no session exists
@@ -125,23 +129,23 @@ export async function GetSessionData(sid : string) : Promise<any> {
 
     const hostName : any[] = await sql`
         SELECT username FROM users
-        WHERE users.user_id = ${hostId}
+        WHERE user_id = ${hostId[0].host_id}
     `
 
     const clientNames : any[] = await sql`
         SELECT username FROM users
-        WHERE users.session_id = ${sid} AND users.user_id <> ${hostId}
+        WHERE session_id = ${sid} AND user_id <> ${hostId[0].host_id}
     `
 
     // Returns queue in sorted order
     const queue : any[] = await sql`
-        SELECT q.song_name, q.artist_name, q.album_cover, q.placement, q.added_by, q.spotify_url
-        FROM queues q
-        WHERE q.session_id = ${sid}
-        ORDER BY song_id
+        SELECT song_name, artist_name, album_cover, placement, added_by, spotify_url
+        FROM queues
+        WHERE session_id = ${sid}
+        ORDER BY placement
     `
     
-    return {hostName: hostName[0], clientNames: clientNames, queue: queue}; // Return an object containing the hosts user name
+    return {hostName: hostName[0].username, clientNames: clientNames, queue: queue}; // Return an object containing the hosts user name
 }
 
 
@@ -182,11 +186,11 @@ export async function AddSongToQueue(
     `
 }
 
-
+/*
 export async function GetUserName(sid : string) : Promise<any> {
     const username = await sql`
         SELECT user_name FROM users
         WHERE 
     `
-}
+} */
     
