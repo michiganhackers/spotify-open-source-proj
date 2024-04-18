@@ -1,11 +1,15 @@
 'use client'
 import { stringify } from 'querystring';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'
+import { Router } from 'next/router';
 require('dotenv').config();
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState("");
   const [username, setUsername] = useState("");
+
+  const router = useRouter();
   
   useEffect(() => {
     // This effect will run only on the client side
@@ -31,7 +35,7 @@ export default function Home() {
   
   // TODO: Add input for username for both host and guest options
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="background flex min-h-screen flex-col items-center justify-between p-24">
       <img src="GMJ-emblem-color.svg" alt="" />
       <div className="options">
         <div className="hostoptions">
@@ -54,13 +58,13 @@ export default function Home() {
         <div className="guestoptions">
             <h1>I'm a guest:</h1>
             <form data-testid="guest-form">
-                <input type="text" placeholder='Guest Code' maxLength={6} name="guestcode"  onChange={(e) => setGuestCode(e.target.value.toUpperCase())}/>
+                <input type="text" placeholder='Guest Code' maxLength={8} name="guestcode"  onChange={(e) => setGuestCode(e.target.value.toUpperCase())}/>
                 <input type="text" placeholder='Username' maxLength={25} name="username" onChange={(e) => setUsername(e.target.value)}/>
             </form>
             <button className="SubmitButton" onClick={() => {
                 sessionStorage.setItem("username", username);
                 sessionStorage.setItem("isHost", "true");
-                connectToSession(guestCode, username)}}>
+                connectToSession(guestCode, username, router)}}>
                     Join
             </button>
         </div>
@@ -69,7 +73,9 @@ export default function Home() {
   );
 }
 
-async function connectToSession(guestCode : string, username : string) : Promise<void> { 
+async function connectToSession(guestCode : string, username : string, router : any) : Promise<void> { 
+    
+
   try {
     await fetch('api/sessionDB/connect', {
       method: 'POST',
@@ -80,7 +86,15 @@ async function connectToSession(guestCode : string, username : string) : Promise
           guestCode: guestCode,
           username: username
       }),
-    });
+    }).then((response) => {
+        if(!response.ok)
+            throw Error(response.statusText);
+
+        return response.json();
+    }).then((data) => {
+        const url = data.url;
+        router.push(url);
+    })
   }
   catch(e){
     // Add some error message to user saying that wrong code was entered

@@ -17,7 +17,7 @@ export async function CreateUser(
 
     const users : any[] = await sql`
         SELECT * FROM users
-        WHERE username = ${username}
+        WHERE username = ${username} AND session_id = ${sessionID}
     `
 
     if (users.length > 0) {
@@ -67,7 +67,7 @@ export async function VerifyGuestCode(guestCode : string) : Promise<any> {
         throw new Error("Wrong guest code");
     }
 
-    return sid[0]; // Return the session id
+    return sid[0].session_id; // Return the session id
 }
 
 export async function CreateSession(
@@ -82,7 +82,7 @@ export async function CreateSession(
     // TODO: Consider hashing or encrypting the created code to improve security
     function CreateCode() {
         // Generates a new code
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         let result = "";
         for (let i = 0; i < 8; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -159,14 +159,14 @@ export async function GetAccessToken(sid : string) : Promise<any> {
         throw Error("Undefined session id")
     }
 
-    return token[0];
+    return token[0].access_token;
 }
 
 
 export async function AddSongToQueue(
     songId : string, songName : string,
     albumCover : string, artistName : string,
-    placement : string, addedBy : string, sid : string, url: string) : Promise<void> {
+    placement : number, addedBy : string, sid : string, url: string) : Promise<void> {
 
     const song = {
         song_id: songId,
@@ -175,14 +175,15 @@ export async function AddSongToQueue(
         artist_name: artistName,
         placement: placement,
         added_by: addedBy,
-        session_id: sid,
         spotify_url: url
     }
 
     // Create new song entry in queues with given params
     await sql`
-        INSERT INTO queues 
-        VALUES (${sql(song)})
+        UPDATE queues
+        SET song_id = ${song.song_id}, song_name = ${song.song_name}, album_cover = ${song.album_cover}, 
+            artist_name = ${song.artist_name}, placement = ${song.placement}, added_by = ${song.added_by}, spotify_url = ${song.spotify_url}
+        WHERE session_id = ${sid}
     `
 }
 

@@ -16,15 +16,15 @@ CREATE TABLE users (
 );
 
 CREATE TABLE queues (
+    song_id varchar(255),
     song_name varchar(255),
     artist_name varchar(255),
     album_cover varchar(255),
     placement INT NOT NULL,
     session_id varchar(8),
-    added_by INT,
+    added_by varchar(255),
     spotify_url varchar(255),
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id),
-    FOREIGN KEY (added_by) REFERENCES users(user_id)
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
 );
 
 ALTER TABLE sessions ADD CONSTRAINT fk_session_host_id

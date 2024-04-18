@@ -1,5 +1,6 @@
 /* API endpoint for connecting to a session */
 import { CreateUser, VerifyGuestCode } from '../../../../database/db'
+import { redirect } from 'next/navigation'
 import { NextResponse } from 'next/server';
 import 'dotenv/config'
 
@@ -9,7 +10,7 @@ export async function POST(req: Request) {
     const guestCode : string = data.guestCode;
 
     const username : string = data.username;
-    
+
     let sid : string;
     try {
         sid  = await VerifyGuestCode(guestCode);
@@ -24,5 +25,9 @@ export async function POST(req: Request) {
     const user = await CreateUser(username, sid, false);
     
     // If passes all checks, redirect to session page
-    return NextResponse.redirect(new URL(`/session/${sid}`, process.env.APP_SERVER));
+    // redirect('/session/' + sid)
+    return NextResponse.json(
+        { url: `session/${sid}` },
+        { status: 200 }
+    );
 }
