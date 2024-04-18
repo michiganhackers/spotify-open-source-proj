@@ -139,6 +139,11 @@ input[type=button]{
   border-radius: 1em;
   padding: 0.5em;
   background-color: green;
+  transition: background-color 0.3s ease;
+}
+
+.SubmitButton:hover{
+  background-color: rgb(7, 210, 7);
 }
 
 img {
@@ -226,4 +231,24 @@ img {
 .song p {
     text-align: right;
     color: white;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+
+  display: flex; 
+  align-items: center; 
+  
+}
+.header *{
+  padding: 10px; 
+  float: left;
+}
+
+#QueueInterface {
+  margin-top: 20px;
 }
