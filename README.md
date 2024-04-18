@@ -52,3 +52,13 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Websocket Server Setup
+
+Finally, we need to run our websocket server on a seperate port as our application server. To do so, in a seperate terminal run:
+
+```
+node --loader ts-node/esm src/socket/server.ts
+```
+
+Now you should have a websocket server running on http://localhost:8080.
+
