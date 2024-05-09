@@ -22,18 +22,16 @@ export default function Home() {
   
     // var state = generateRandomString(16);
     var scope = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
-    // var state = username;
   
     window.location.href = `https://accounts.spotify.com/authorize?${stringify({
         response_type: 'code',
         client_id: client_id,
         scope: scope,
         redirect_uri: redirect_uri,
-        // state: state // state represents the hosts username here
+        // state: state
       })}`
   }
   
-  // TODO: Add input for username for both host and guest options
   return (
     <main className="background flex min-h-screen flex-col items-center justify-between p-24">
       <img src="GMJ-emblem-color.svg" alt="" />

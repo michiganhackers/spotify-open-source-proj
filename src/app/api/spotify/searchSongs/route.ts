@@ -9,9 +9,7 @@ export async function POST(req: Request) {
     const reqData = await req.json();
     const url : string = "https://api.spotify.com/v1/search?q=" + reqData.songName + "&type=track&limit=5";
     const sid : string = reqData.sid;
-    //q=name:<user_input>&type=track    
-
-    // TODO: Search the database to see if the song is already queued
+    //q=name:<user_input>&type=track  
 
     // TODO: Get the access token for the spotify api from the db for this session
     var access_token = await GetAccessToken(sid)

@@ -14,11 +14,14 @@ io.on("connection", (socket) => {
     // Add user to the room (session) in which they want to connect
     socket.join(sid);
 
+    var counter = 0;
     socket.on("sendSongToSocket", (songData) => {
+        console.log(counter)
         console.log(songData)
         console.log("received song from client")
         io.to(sid).emit("addSongToUI", songData)
         console.log("sending song to session members at: " + sid)
+        counter++;
     })
 
 

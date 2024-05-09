@@ -8,13 +8,15 @@ export function Session({
     isHost, sid, username,
     hostName, clientNames, queue
 } : {
-    isHost : boolean, sid : string, username : string,
+    isHost : string, sid : string, username : string,
     hostName : string, clientNames : string[], queue : any[]
 }) {
 
+    console.log(isHost)
+
     const socket = socketIO(sid);
 
-    if(isHost)
+    if(isHost === "true")
         return <SessionHost 
             hostName={hostName}
             clientNames={clientNames}
@@ -63,7 +65,7 @@ interface QueueProps {
 }
 
 
-function Queue({ queue, socket, username, sid } : { queue : any[], socket : any, username : string, sid : string}){
+function Queue({ queue, socket, username, sid } : { queue : any[], socket : any, username : string, sid : string}) {
   // Function body
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
@@ -81,7 +83,8 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
   };
 
   function addSongListener(songData : any) {
-    socket.off("addSongToUI", addSongListener); 
+    // socket.off("addSongToUI", addSongListener); 
+    console.log(songData)
     addSongToQueue(songData); 
   }
 
@@ -144,6 +147,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
         return response.json();
     }).then((data) => {
         // Update the selection of songs based on search input
+        let tmp : any[] = [];
         for(let i = 0; i < data.song_results.length; i++) {
             const songProps = {
                 songId: data.song_results[i].songId,  
@@ -152,11 +156,16 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
                 albumCover: data.song_results[i].albumCover,
                 artistName: data.song_results[i].artistName,
               };
-            setSongQuery(prevSongQuery => prevSongQuery.concat(songProps))
+            console.log(songProps);
+            tmp[i] = songProps;
         }
-      
+        console.log(tmp);
+        setSongQuery(tmp);
     }).catch((error) => console.log(error))
   }
+
+  let timer : any;
+  const waitTime = 500;
 
   return (
     <div id="QueueWrapper">
@@ -175,9 +184,12 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
         <input
           type="text"
           placeholder='Track Name'
-          onChange={(e) => {
-            searchSongs(e.target.value)
-            // TODO: Create some buffer after each call to prevent many calls at once
+          onKeyUp={(e : any) => {
+            clearTimeout(timer);
+
+            timer = setTimeout(() => {
+                searchSongs(e.target.value)
+            }, waitTime);
           }
         }
         />
@@ -206,7 +218,8 @@ export function SessionGuest( {hostName, clientNames, queue, username, socket, s
       <div id="session-header">
         <button>Exit</button>
         <h1>{username}</h1>
-        <h1>${hostName}</h1>
+        <h1>Host: {hostName}</h1>
+        <h1>Guest Code: {sid}</h1>
       </div>
       <div id="session-body">
         <Queue
@@ -229,6 +242,7 @@ export function SessionHost({hostName, clientNames, queue, username, socket, sid
         <div id="session-header">
           <button>End Session</button>
           <h1>{username}</h1>
+          <h1>Guest Code: {sid}</h1>
         </div>
         <div id="session-body">
           <Queue

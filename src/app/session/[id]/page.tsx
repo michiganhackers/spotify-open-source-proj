@@ -7,14 +7,14 @@ import { Session } from './client'
 import 'dotenv/config'
 
 export default function SessionPage({ params } : { params: { id: string} }) {
-    const [isHost, setIsHost] = useState(false);
+    const [isHost, setIsHost] = useState("");
     const [username, setUsername] = useState("");
     
     let sid : string = params.id;
 
     useEffect(() => {
         if (typeof(window) !== 'undefined' && typeof(sessionStorage) !== 'undefined') {
-            setIsHost(sessionStorage.getItem('isHost') === "true");
+            setIsHost(sessionStorage.getItem('isHost') || "");
             setUsername(sessionStorage.getItem('username') || "");
         }
     }, []);
@@ -44,6 +44,8 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             queue = sessionData.queue;
         })
     }, []);    
+
+    console.log(isHost);
     
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">

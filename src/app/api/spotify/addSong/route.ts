@@ -37,10 +37,6 @@ export async function POST(req: Request) {
     const placement : number = reqData.qlen + 1
     const addedBy = reqData.addedBy
 
- /*   for(let i = 0; i < songUri.length; i++) {
-        if(songUri[i] === ':')
-            songUri[i] = '%';
-    } */
     // Add song to the user's spotify queue
     const queueResponse = await fetch('https://api.spotify.com/v1/me/player/queue?uri=' + songUri, {
         method: 'POST',
@@ -49,8 +45,6 @@ export async function POST(req: Request) {
             Authorization: bearer
         },
     })
-
-    console.log(queueResponse)
         
     // Add song details to queue in the database
     await AddSongToQueue(songId, songName, albumCover, artistName, placement, addedBy, sid, url);
