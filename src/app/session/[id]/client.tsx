@@ -155,7 +155,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
                 user: username,
                 albumCover: data.song_results[i].albumCover,
                 artistName: data.song_results[i].artistName,
-              };
+                };
             console.log(songProps);
             tmp[i] = songProps;
         }

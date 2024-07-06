@@ -1,8 +1,5 @@
 'use client'
-import { TemplateContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { socketIO } from '@/src/socket/client'
 import { Session } from './client'
 import 'dotenv/config'
 

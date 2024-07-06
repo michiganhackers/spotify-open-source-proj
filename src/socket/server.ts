@@ -19,14 +19,14 @@ io.on("connection", (socket) => {
         console.log(counter)
         console.log(songData)
         console.log("received song from client")
-        io.to(sid).emit("addSongToUI", songData)
+        socket.broadcast.to(sid).emit("addSongToUI", songData)
         console.log("sending song to session members at: " + sid)
         counter++;
     })
 
 
     socket.on("sendSongsToSearch", (songData) => {
-        io.to(songData.sid).emit("addSongToUI", songData)
+        socket.broadcast.to(songData.sid).emit("addSongToUI", songData)
     })
     /*
     // Add user to the database (call CreateUser function from db.ts)

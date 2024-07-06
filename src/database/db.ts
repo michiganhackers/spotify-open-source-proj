@@ -2,7 +2,7 @@ import postgres from 'postgres'
 import 'dotenv/config'
 import { RSC_ACTION_CLIENT_WRAPPER_ALIAS } from 'next/dist/lib/constants'
 
-const sql = postgres(process.env.PG_URI!) // will use psql environment variables
+const sql = postgres(process.env.PG_URI!)
 
 export async function CreateUser(
     username : string,
