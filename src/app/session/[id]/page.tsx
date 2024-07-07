@@ -41,8 +41,6 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             queue = sessionData.queue;
         })
     }, []);    
-
-    console.log(isHost);
     
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">

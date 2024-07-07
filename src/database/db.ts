@@ -187,6 +187,23 @@ export async function AddSongToQueue(
     `
 }
 
+
+export async function GetQueue(sid : string) : Promise<any[]> {
+    const queue = await sql`
+        SELECT song_id from queues
+        WHERE session_id = ${sid}
+        ORDER BY placement
+    `
+    console.log(queue);
+    return []; // TODO
+}
+
+
+export async function ReplaceQueue(sid : string) : Promise<void> {
+    return; // TODO
+}
+
+
 /*
 export async function GetUserName(sid : string) : Promise<any> {
     const username = await sql`

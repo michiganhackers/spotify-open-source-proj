@@ -10,9 +10,7 @@ export async function POST(req: Request) {
     const url : string = reqData.url;
     const sid : string = reqData.sid;
 
-    // Search the database to see if the song is already queued
-
-    // TODO: Get the access token for the spotify api from the db for this session
+    // Get the access token for the spotify api from the db for this session
     var access_token = await GetAccessToken(sid)
     // Retrieve song data from the spotify api endpoint
     var responseBody : any = {};
@@ -47,6 +45,7 @@ export async function POST(req: Request) {
     })
         
     // Add song details to queue in the database
+    console.log(songId);
     await AddSongToQueue(songId, songName, albumCover, artistName, placement, addedBy, sid, url);
 
     responseBody = { songId, songName, albumCover, artistName, placement, addedBy };

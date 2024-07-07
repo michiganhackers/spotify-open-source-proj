@@ -1,9 +1,10 @@
 'use client'
 import { stringify } from 'querystring';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { Router } from 'next/router';
-require('dotenv').config();
+import { handleSpotifyAuth } from '@/utils';
+import 'dotenv/config';
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState("");
@@ -15,22 +16,6 @@ export default function Home() {
     // This effect will run only on the client side
     // You can place any client-side specific logic here
   }, []); // Empty dependency array ensures the effect runs only once on mount
-
-  const handleSpotifyAuth = () => {
-    var client_id = "7427c1385e5941aea9bd97ab44b76ae0"; // Ashton's client code for testing
-    var redirect_uri = 'http://localhost:3000/api/spotify/getToken'
-  
-    // var state = generateRandomString(16);
-    var scope = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
-  
-    window.location.href = `https://accounts.spotify.com/authorize?${stringify({
-        response_type: 'code',
-        client_id: client_id,
-        scope: scope,
-        redirect_uri: redirect_uri,
-        // state: state
-      })}`
-  }
   
   return (
     <main className="background flex min-h-screen flex-col items-center justify-between p-24">
@@ -44,7 +29,10 @@ export default function Home() {
             <button className="SubmitButton" onClick={() => {
                 sessionStorage.setItem("username", username);
                 sessionStorage.setItem("isHost", "true");
-                handleSpotifyAuth()
+                const client_id : string | undefined = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID; // Spotify developer client id for API calls
+                const redirect_uri : string = 'http://localhost:3000/api/spotify/getToken'
+                const scope : string = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
+                handleSpotifyAuth(client_id, redirect_uri, scope);
                 }}>
                 Host a Jam
             </button>
@@ -95,7 +83,7 @@ async function connectToSession(guestCode : string, username : string, router : 
     })
   }
   catch(e){
-    // Add some error message to user saying that wrong code was entered
+    // TODO: Add some error message to user saying that wrong code was entered
     
   }
 }

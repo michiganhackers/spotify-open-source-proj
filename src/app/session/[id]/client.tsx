@@ -84,11 +84,13 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
 
   function addSongListener(songData : any) {
     // socket.off("addSongToUI", addSongListener); 
-    console.log(songData)
+    //console.log(songData)
     addSongToQueue(songData); 
   }
 
-  socket.once("addSongToUI", addSongListener);  
+  socket.removeAllListeners("addSongToUI");
+  socket.on("addSongToUI", addSongListener);
+  console.log(socket._callbacks)  
 
   // Handles song submission then clears input
   const handleAddSong = (songId : string) => {
@@ -109,7 +111,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
         return response.json();
     }).then((data) => {
         // Update the UI of all other clients
-        console.log(data);
+        // console.log(data);
         const songData = {  
                             songId: songId,
                             songName: data.responseBody.songName,
@@ -120,7 +122,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
                         }
         // Add the listener for a song
         socket.emit("sendSongToSocket", songData)
-        addSongToQueue(songData);
+        // addSongToQueue(songData);
     }).catch((error) => console.log(error))
 
   };
