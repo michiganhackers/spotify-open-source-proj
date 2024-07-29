@@ -139,7 +139,7 @@ export async function GetSessionData(sid : string) : Promise<any> {
 
     // Returns queue in sorted order
     const queue : any[] = await sql`
-        SELECT song_name, artist_name, album_cover, placement, added_by, spotify_url
+        SELECT song_name, artist_name, album_cover, placement
         FROM queues
         WHERE session_id = ${sid}
         ORDER BY placement
@@ -166,7 +166,7 @@ export async function GetAccessToken(sid : string) : Promise<any> {
 export async function AddSongToQueue(
     songId : string, songName : string,
     albumCover : string, artistName : string,
-    placement : number, addedBy : string, sid : string, url: string) : Promise<void> {
+    placement : number, sid : string) : Promise<void> {
 
     const song = {
         song_id: songId,
@@ -174,19 +174,15 @@ export async function AddSongToQueue(
         album_cover: albumCover,
         artist_name: artistName,
         placement: placement,
-        added_by: addedBy,
-        spotify_url: url
     }
 
     // Create new song entry in queues with given params
     await sql`
-        UPDATE queues
-        SET song_id = ${song.song_id}, song_name = ${song.song_name}, album_cover = ${song.album_cover}, 
-            artist_name = ${song.artist_name}, placement = ${song.placement}, added_by = ${song.added_by}, spotify_url = ${song.spotify_url}
-        WHERE session_id = ${sid}
+        INSERT INTO queues (song_id, song_name, album_cover, artist_name, placement, session_id)
+        VALUES (${song.song_id}, ${song.song_name}, ${song.album_cover}, 
+            ${song.artist_name}, ${song.placement}, ${sid})
     `
 }
-
 
 export async function GetQueue(sid : string) : Promise<any[]> {
     const queue = await sql`
@@ -194,13 +190,23 @@ export async function GetQueue(sid : string) : Promise<any[]> {
         WHERE session_id = ${sid}
         ORDER BY placement
     `
-    console.log(queue);
-    return []; // TODO
+    return queue;
 }
 
 
-export async function ReplaceQueue(sid : string) : Promise<void> {
-    return; // TODO
+export async function ReplaceQueue(sid : string, queue : any[]) : Promise<void> {
+
+    // Drop all songs in queue of session with sid
+    await sql`
+        DELETE FROM queues
+        WHERE session_id = ${sid}
+    `
+    queue.forEach(async (song : any, index : number) => {
+        AddSongToQueue(
+            song.songId, song.songName,
+            song.albumCover, song.artistName,
+            song.placement, sid)
+    });
 }
 
 

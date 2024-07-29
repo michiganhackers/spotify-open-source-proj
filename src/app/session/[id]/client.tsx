@@ -90,7 +90,6 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
 
   socket.removeAllListeners("addSongToUI");
   socket.on("addSongToUI", addSongListener);
-  console.log(socket._callbacks)  
 
   // Handles song submission then clears input
   const handleAddSong = (songId : string) => {
@@ -103,7 +102,6 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
         body: JSON.stringify({
             url: "https://api.spotify.com/v1/tracks/" + songId,
             sid: sid,
-            addedBy: username,
             qlen: songList.length
         })
     }).then((response) => {
@@ -118,7 +116,6 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
                             albumCover: data.responseBody.albumCover,
                             artistName: data.responseBody.artistName, 
                             placement: data.responseBody.placement, 
-                            addedBy: data.responseBody.addedBy
                         }
         // Add the listener for a song
         socket.emit("sendSongToSocket", songData)

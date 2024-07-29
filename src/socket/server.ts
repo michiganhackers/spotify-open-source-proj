@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { GetAccessToken, GetQueue, GetSessionData } from "../database/db"
+import { GetAccessToken, GetQueue, GetSessionData, ReplaceQueue } from "../database/db"
 import { handleSpotifyAuth } from "@/utils";
 import 'dotenv/config'
 
@@ -23,39 +23,17 @@ io.on("connection", (socket) => {
 
     // IDEA: Don't emit addSongToUI inside of sendSongToSocket
     //       Instead, have one function running a constant check for updates to the queue
-    async function checkQueueUpdates(sid : string) {
-        var access_token = await GetAccessToken(sid);
-        var responseBody : any = {};
-        var bearer = 'Bearer ' + access_token;
-        const url = 'http://localhost:3000/api/spotify/getQueue';
-        const response = await fetch(url, { 
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                accessToken: access_token
-            })
-        });
-
-        if(!response.ok)
-            throw Error(response.statusText);    
     
-        const data = await response.json();
-
-        const queue : any[] = data.queueNames;
-        console.log(queue);
-    /*    const dbQueue : any[] = await GetQueue(sid);
-        queue.forEach((song) => {
-            // Song comparison logic to current database state
-
-            // If differences update database using /db.ts/ReplaceQueue()
-        }) */
-    }
-
-    checkQueueUpdates(sid);
-  // const checkQueueUpdatesInterval = setInterval(() => {checkQueueUpdates(sid)}, 1000);
+    /* IF HOST */
+    var checkQueueUpdatesInterval = setInterval(() => {
+        try {
+            checkQueueUpdates(sid)
+        }
+        catch (error : any) {
+            console.error(error);
+        }
+    }, 5000);
+    
 
     var counter = 0;
     socket.on("sendSongToSocket", (songData) => {
@@ -91,6 +69,41 @@ io.on("connection", (socket) => {
         socket.emit("initSession", sessionData);
     })
     */
+
+    socket.on("disconnect", () => {
+        clearInterval(checkQueueUpdatesInterval);
+    })
 });
 
 io.listen(8080);
+
+
+async function checkQueueUpdates(sid : string) {
+    const access_token = await GetAccessToken(sid);
+    const url = 'http://localhost:3000/api/spotify/getQueue';
+    const response = await fetch(url, { 
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            accessToken: access_token
+        })
+    });
+
+    if(!response.ok)
+        throw Error(response.statusText);    
+
+    const data = await response.json();
+
+    const queue : any[] = data.queue;
+    const dbQueue : any[] = await GetQueue(sid);
+    queue.forEach((song : any, index : number) => {
+        // Song comparison logic to current database state
+        if(index >= dbQueue.length || song.id != dbQueue[index].song_id) {
+            ReplaceQueue(sid, queue);
+        }
+        
+    }) 
+}
