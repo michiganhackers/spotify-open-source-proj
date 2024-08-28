@@ -74,7 +74,9 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   socket.connect(); // connect to ws
 
   // Initialize starting queue from connection
-  setSongList(initQueue);
+  for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
+    setSongList((prevSongs) => [...prevSongs, initQueue[i]]);
+ }
 
   // Add song to end of the queue with all data needed for UI
   const addSongToQueue = (songInput: any) => {
