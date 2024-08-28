@@ -84,7 +84,7 @@ async function connectToSession(guestCode : string, username : string, router : 
   }
   catch(e){
     // TODO: Add some error message to user saying that wrong code was entered
-    
+    console.error(e);
   }
 }
 

@@ -7,6 +7,6 @@ export function socketIO(sid : string) {
         auth: {   
             token: sid
         },
-        autoConnect: false
+        autoConnect: false,
     }); // Initialize the client-side websocket
 }

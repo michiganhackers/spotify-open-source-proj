@@ -6,8 +6,7 @@ import { NextResponse } from 'next/server';
 import 'dotenv/config'
 
 export async function POST(req: Request) {
-    // const cookieStore = cookies();
-
+    
     const data = await req.json();
     const accessToken : string = data.accessToken;
     const refreshToken : string = data.refreshToken;

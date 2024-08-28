@@ -1,38 +1,35 @@
 import postgres from 'postgres'
 import 'dotenv/config'
-import { RSC_ACTION_CLIENT_WRAPPER_ALIAS } from 'next/dist/lib/constants'
+
 
 const sql = postgres(process.env.PG_URI!)
 
+
+/*
+    <returns>User ID of created user</returns>
+    <modifies>{users, sessions} tables</modifies>
+*/
 export async function CreateUser(
     username : string,
-    sessionID : string,
+    sid : string,
     isHost: boolean) : Promise<any> {
-    
-    // Insert new user into DB
-    const userData = {
-        "session_id": sessionID,
-        "username": username
-    }
 
     const users : any[] = await sql`
         SELECT * FROM users
-        WHERE username = ${username} AND session_id = ${sessionID}
+        WHERE username = ${username} AND session_id = ${sid}
     `
 
-    if (users.length > 0) {
-        for (let i = 0; i < users.length; i++) {
-            let session = users[i]['session_id']
-            if (session === sessionID || session === "NULL") {
-                throw new Error("User in this session already exists.")
-            }
+    for (let i = 0; i < users.length; i++) {
+        let session = users[i]['session_id']
+        if (session === sid || session === "NULL") {
+            throw new Error("User in this session already exists.")
         }
     }
 
     // Insert hosts user to database
     await sql`
     INSERT INTO users (session_id, username)
-    VALUES (${userData.session_id}, ${userData.username})
+    VALUES (${sid}, ${username})
     `
 
     // Get the user ID of the newly created user
@@ -40,21 +37,22 @@ export async function CreateUser(
     // SOLUTION: ensure session id is present when querying 
     const user : any[] = await sql`
         SELECT user_id, username FROM users
-        WHERE username = ${userData['username']}
-        AND session_id = ${userData['session_id']}
+        WHERE username = ${username}
+        AND session_id = ${sid}
     `
+    const uid : any = user[0]['user_id'];
 
     // Update the host_id of the session with newly created host user
     if(isHost) {
         await sql`
             UPDATE sessions
-            SET host_id = ${user[0].user_id}
-            WHERE session_id = ${sessionID}
+            SET host_id = ${uid}
+            WHERE session_id = ${sid}
         `
     }
 
     // Return the user ID of newly created user
-    return user[0]['user_id'], user[0]['user_name'];
+    return uid;
 }
 
 export async function VerifyGuestCode(guestCode : string) : Promise<any> {
@@ -79,7 +77,7 @@ export async function CreateSession(
         SELECT session_id FROM sessions
     `
     
-    // TODO: Consider hashing or encrypting the created code to improve security
+    // SECURITY: Consider hashing or encrypting the created code to improve security
     function CreateCode() {
         // Generates a new code
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -99,13 +97,6 @@ export async function CreateSession(
             if (code === codes[i]['session_id']) is_unique = false;
         }
     } while (!is_unique)
-
-    // Insert new session into DB
-    const session = {
-        "session_id": code,
-        "access_token": accessToken,
-        "refresh_token": refreshToken
-    }
 
     await sql`
     INSERT INTO sessions (session_id, access_token, refresh_token)
@@ -196,25 +187,17 @@ export async function GetQueue(sid : string) : Promise<any[]> {
 
 export async function ReplaceQueue(sid : string, queue : any[]) : Promise<void> {
 
+    console.log("Replacing queue in database...");
     // Drop all songs in queue of session with sid
     await sql`
         DELETE FROM queues
         WHERE session_id = ${sid}
     `
     queue.forEach(async (song : any, index : number) => {
-        AddSongToQueue(
+        await AddSongToQueue(
             song.songId, song.songName,
             song.albumCover, song.artistName,
             song.placement, sid)
     });
 }
-
-
-/*
-export async function GetUserName(sid : string) : Promise<any> {
-    const username = await sql`
-        SELECT user_name FROM users
-        WHERE 
-    `
-} */
     

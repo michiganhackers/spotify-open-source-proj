@@ -20,6 +20,12 @@ export async function POST(req: Request) {
     const data = await response.json();
     const queue : any[] = [];
 
+    if(data.currently_playing == null) { // Nothing is currently playing, return empty queue
+        return NextResponse.json(
+            { queue },
+            { status : 200 }
+        )
+    }
     const currentSong = data.currently_playing;
     const currentSongObject = {
         songId: currentSong.id,
@@ -38,7 +44,7 @@ export async function POST(req: Request) {
             songName: song.name,
             albumCover: song.album.images[0].url,
             artistName: song.artists[0].name,
-            placement: index + 2    // Accounts for currently playing and 1-based indexing
+            placement: index + 2    // Accounts for currently playing and 1-based indexing for placement value
         }
         queue.push(songObject);
     })

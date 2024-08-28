@@ -65,7 +65,7 @@ interface QueueProps {
 }
 
 
-function Queue({ queue, socket, username, sid } : { queue : any[], socket : any, username : string, sid : string}) {
+function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socket : any, username : string, sid : string}) {
   // Function body
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
@@ -73,9 +73,8 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
 
   socket.connect(); // connect to ws
 
-  for(let i = 0; i < queue.length; i++) { // Initialize starting queue from connection
-     setSongList((prevSongs) => [...prevSongs, queue[i]]);
-  }
+  // Initialize starting queue from connection
+  setSongList(initQueue);
 
   // Add song to end of the queue with all data needed for UI
   const addSongToQueue = (songInput: any) => {
@@ -88,8 +87,10 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
     addSongToQueue(songData); 
   }
 
-  socket.removeAllListeners("addSongToUI");
-  socket.on("addSongToUI", addSongListener);
+  socket.removeAllListeners("UpdateQueueUI");
+  socket.on("UpdateQueueUI", function replaceQueue(queue : any[]) {
+     setSongList(queue);
+  });
 
   // Handles song submission then clears input
   const handleAddSong = (songId : string) => {
@@ -100,7 +101,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            url: "https://api.spotify.com/v1/tracks/" + songId,
+            songId: songId,
             sid: sid,
             qlen: songList.length
         })
@@ -108,17 +109,17 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
         if (!response.ok) throw Error(response.statusText);
         return response.json();
     }).then((data) => {
-        // Update the UI of all other clients
-        // console.log(data);
-        const songData = {  
-                            songId: songId,
-                            songName: data.responseBody.songName,
-                            albumCover: data.responseBody.albumCover,
-                            artistName: data.responseBody.artistName, 
-                            placement: data.responseBody.placement, 
-                        }
-        // Add the listener for a song
-        socket.emit("sendSongToSocket", songData)
+        const songData = 
+        {  
+            songId: songId,
+            songName: data.responseBody.songName,
+            albumCover: data.responseBody.albumCover,
+            artistName: data.responseBody.artistName, 
+            placement: data.responseBody.placement,
+        }
+        // GOAL: Update UI of all other clients
+        // ACTION: Talk to WSS using designated event
+        // socket.emit("sendSongToSocket", songData)
         // addSongToQueue(songData);
     }).catch((error) => console.log(error))
 
@@ -132,7 +133,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
         return;
     }
     // Requests all similar song names
-    fetch('http://localhost:3000/api/spotify/searchSongs', { // Adds song to the database
+    fetch('http://localhost:3000/api/spotify/searchSongs', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
@@ -155,10 +156,9 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
                 albumCover: data.song_results[i].albumCover,
                 artistName: data.song_results[i].artistName,
                 };
-            console.log(songProps);
             tmp[i] = songProps;
         }
-        console.log(tmp);
+        // Update UI component with new search data
         setSongQuery(tmp);
     }).catch((error) => console.log(error))
   }
@@ -177,6 +177,7 @@ function Queue({ queue, socket, username, sid } : { queue : any[], socket : any,
             coverArtURL={song.albumCover}
             artistName={song.artistName}
           />
+
         </div>
       ))}
       <div id="AddSong">
@@ -222,7 +223,7 @@ export function SessionGuest( {hostName, clientNames, queue, username, socket, s
       </div>
       <div id="session-body">
         <Queue
-        queue={queue}
+        initQueue={queue}
         socket={socket}
         username={username}
         sid={sid}
@@ -245,7 +246,7 @@ export function SessionHost({hostName, clientNames, queue, username, socket, sid
         </div>
         <div id="session-body">
           <Queue
-            queue={queue}
+            initQueue={queue}
             socket={socket}
             username={username}
             sid={sid}

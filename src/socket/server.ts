@@ -2,6 +2,8 @@ import { Server } from "socket.io";
 import { GetAccessToken, GetQueue, GetSessionData, ReplaceQueue } from "../database/db"
 import { handleSpotifyAuth } from "@/utils";
 import 'dotenv/config'
+import { log } from "console";
+import { deprecate } from "util";
 
 /* const client_id : string | undefined = process.env.SPOTIFY_WSS_CLIENT_ID;
 const redirect_uri : string | undefined = process.env.WS_SERVER;
@@ -22,63 +24,43 @@ io.on("connection", (socket) => {
     socket.join(sid);
 
     // IDEA: Don't emit addSongToUI inside of sendSongToSocket
-    //       Instead, have one function running a constant check for updates to the queue
-    
-    /* IF HOST */
-    var checkQueueUpdatesInterval = setInterval(() => {
+    //       Instead, have one function running a constant check for updates to the queue 
+    /* TODO: IF HOST */
+    var checkQueueUpdatesInterval = setInterval(async () => {
         try {
-            checkQueueUpdates(sid)
+            await checkQueueUpdates(sid, io);
         }
         catch (error : any) {
             console.error(error);
         }
     }, 5000);
     
-
     var counter = 0;
     socket.on("sendSongToSocket", (songData) => {
         console.log(counter)
         console.log(songData)
         console.log("received song from client")
+
         socket.to(sid).emit("addSongToUI", songData) // Send the song to ALL users in the session (including sender)
         console.log("sending song to session members at: " + sid)
         counter++;
     })
 
-
     socket.on("sendSongsToSearch", (songData) => {
         socket.broadcast.to(songData.sid).emit("addSongToUI", songData)
     })
-    /*
-    // Add user to the database (call CreateUser function from db.ts)
-    const sid : string = socket.handshake.auth.token;  
-    console.log(sid)
-    
-    // Add user to the room (session) in which they want to connect
-    socket.join(sid);
-
-    // Send all of the session data to the client so that their UI may be updated (call GetSessionData from db.ts)
-    var sessionData : {hostName: string, clientNames : string[], queue : any[]};
-    GetSessionData(sid).then((data : any) => {
-        sessionData = { hostName: data.hostName,
-                     clientNames: data.clientNames, 
-                     queue: data.queue };
-                     
-        console.log(sessionData);
-        // Emits an initSession event listener for the client to listen for
-        socket.emit("initSession", sessionData);
-    })
-    */
 
     socket.on("disconnect", () => {
         clearInterval(checkQueueUpdatesInterval);
     })
 });
 
+
 io.listen(8080);
 
 
-async function checkQueueUpdates(sid : string) {
+async function checkQueueUpdates(sid : string, io : any) : Promise<boolean> {
+    console.log("Checking queue disparities...");
     const access_token = await GetAccessToken(sid);
     const url = 'http://localhost:3000/api/spotify/getQueue';
     const response = await fetch(url, { 
@@ -92,18 +74,26 @@ async function checkQueueUpdates(sid : string) {
         })
     });
 
-    if(!response.ok)
-        throw Error(response.statusText);    
+    if(!response.ok)  {
+        console.error(response.statusText);
+        return false; // DB queue doesn't change, return false
+    }
 
     const data = await response.json();
 
     const queue : any[] = data.queue;
     const dbQueue : any[] = await GetQueue(sid);
-    queue.forEach((song : any, index : number) => {
-        // Song comparison logic to current database state
-        if(index >= dbQueue.length || song.id != dbQueue[index].song_id) {
-            ReplaceQueue(sid, queue);
-        }
         
-    }) 
+    for(let index = 0; index < queue.length; index++) {
+        let songId : string = queue[index];
+        // Song comparison logic to current database state
+        if(queue.length !== dbQueue.length || songId != dbQueue[index].song_id) {
+            console.log("Found queue disparity!");
+            await ReplaceQueue(sid, queue); // Replace queue in DB
+            io.to(sid).emit("UpdateQueueUI", queue); // Send updated queue to all users in session
+            return true;
+        }
+    }
+
+    return false; // No Queue changes detected
 }
