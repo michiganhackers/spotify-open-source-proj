@@ -179,7 +179,7 @@ export async function GetQueue(sid : string) : Promise<any[]> {
     const queue = await sql`
         SELECT song_id from queues
         WHERE session_id = ${sid}
-        ORDER BY placement
+        ORDER BY placement ASC
     `
     return queue;
 }

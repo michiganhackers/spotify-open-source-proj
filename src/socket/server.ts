@@ -85,7 +85,8 @@ async function checkQueueUpdates(sid : string, io : any) : Promise<boolean> {
     const dbQueue : any[] = await GetQueue(sid);
         
     for(let index = 0; index < queue.length; index++) {
-        let songId : string = queue[index];
+        let songId : string = queue[index].songId;
+
         // Song comparison logic to current database state
         if(queue.length !== dbQueue.length || songId != dbQueue[index].song_id) {
             console.log("Found queue disparity!");

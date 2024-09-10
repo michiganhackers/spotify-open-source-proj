@@ -6,6 +6,9 @@ import 'dotenv/config'
 export default function SessionPage({ params } : { params: { id: string} }) {
     const [isHost, setIsHost] = useState("");
     const [username, setUsername] = useState("");
+    const [hostName, setHostName] = useState("");
+    const [clientNames, setClientNames] = useState([]);
+    const [queue, setQueue] = useState([]);
     
     let sid : string = params.id;
 
@@ -15,13 +18,11 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             setUsername(sessionStorage.getItem('username') || "");
         }
     }, []);
-   
 
-    var hostName : string = "";
-    var clientNames : string[] = [];
-    var queue : any[] = [];
-
+    /*
     useEffect(() => {
+        console.log("mounting...")
+
         fetch('http://localhost:3000/api/sessionDB/initSession', {
         method: 'POST',
         headers: {
@@ -36,11 +37,13 @@ export default function SessionPage({ params } : { params: { id: string} }) {
 
             return response.json();
         }).then((sessionData) => {
-            hostName = sessionData.hostName;
-            clientNames = sessionData.clientNames;
-            queue = sessionData.queue;
+            setHostName(sessionData.hostName);
+            setClientNames(sessionData.clientNames);
+            setQueue(sessionData.queue);
         })
-    }, []);    
+
+        return () => console.log("unmounting...")
+    }, []); */
     
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">

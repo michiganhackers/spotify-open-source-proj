@@ -29,7 +29,6 @@ export async function POST(req: Request) {
     const currentSong = data.currently_playing;
     const currentSongObject = {
         songId: currentSong.id,
-        songUri: currentSong.uri,
         songName: currentSong.name,
         albumCover: currentSong.album.images[0].url,
         artistName: currentSong.artists[0].name,

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
@@ -11,8 +11,6 @@ export function Session({
     isHost : string, sid : string, username : string,
     hostName : string, clientNames : string[], queue : any[]
 }) {
-
-    console.log(isHost)
 
     const socket = socketIO(sid);
 
@@ -37,7 +35,8 @@ export function Session({
 }
 
 
-export function Song(songProps : {name: string, addedBy? : string, coverArtURL : string, artistName : string}) {
+export function Song(songProps : {id: string, name: string, addedBy? : string, coverArtURL : string, artistName : string}) {
+  const [songId, setSongId] = useState(songProps.id)
   const [songName, setSongName] = useState(songProps.name);
   const [addedBy, setAddedBy] = useState(songProps.addedBy);
   const [coverArtFile, setCoverArtFile] = useState(songProps.coverArtURL);
@@ -72,10 +71,18 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songQuery, setSongQuery] = useState<any[]>([]);
 
   socket.connect(); // connect to ws
-
+  
   // Initialize starting queue from connection
   for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-    setSongList((prevSongs) => [...prevSongs, initQueue[i]]);
+    const songData = 
+        {  
+            songId: initQueue[i].song_id,
+            songName: initQueue[i].song_name,
+            albumCover: initQueue[i].album_cover,
+            artistName: initQueue[i].artist_name, 
+            placement: initQueue[i].placement,
+        }
+    setSongList((prevSongs) => [...prevSongs, songData]);
  }
 
   // Add song to end of the queue with all data needed for UI
@@ -90,8 +97,18 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   }
 
   socket.removeAllListeners("UpdateQueueUI");
-  socket.on("UpdateQueueUI", function replaceQueue(queue : any[]) {
-     setSongList(queue);
+  socket.on("UpdateQueueUI", (queue : any[]) => {
+    console.log("Received UpdateQueueUI emission")
+    console.log(queue)
+      
+   const updatedQueue = queue.map((song) => ({
+        songId: song.songId,
+        songName: song.songName,
+        albumCover: song.albumCover,
+        artistName: song.artistName
+    }))
+
+    setSongList(updatedQueue);
   });
 
   // Handles song submission then clears input
@@ -174,6 +191,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
       {songList.map((song, index) => (
         <div key={index}>
           <Song 
+            id={song.songId}
             name={song.songName}
             addedBy={song.user}
             coverArtURL={song.albumCover}
@@ -199,6 +217,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
           {songQuery.map((song, index) => (
           <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
             <Song 
+              id={song.songId}
               name={song.songName}
               coverArtURL={song.albumCover}
               artistName={song.artistName}

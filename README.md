@@ -12,7 +12,7 @@ To begin, clone the official github repository
 
 or navigate to your local repository and pull latest changes.
 
-### PostgreSQL Setup
+### <a name="postgresql-setup"></a>PostgreSQL Setup
 Download [Docker Desktop](https://www.docker.com/products/docker-desktop/) if you don't already have it installed.
 
 Pull the official docker image of postgres version 14.5 on your machine by running:
@@ -62,3 +62,33 @@ node --loader ts-node/esm src/socket/server.ts
 
 Now you should have a websocket server running on http://localhost:8080.
 
+## Architecture
+
+Green Monster Jelly is built on the [Next.js React framework](https://nextjs.org/), and takes advantage of its ability to seperate Server-side and Client-side rendering. By default, all modules within the src/app/ directory utilize SSR (Server-side rendering), however modules may still be rendered on the client side with the 'use client' directive. This is particularly useful in reducing the overall bundle size sent to clients, as well as increasing security of sensitive data that could be passed around otherwise (access_token, environment variables, etc.).
+
+### Who's talking to who?
+
+There are three central nodes for transmitting data throughout the application, as well as the additional communication link with Spotify's Web API service. 
+
+#### 1. Client
+
+The responsibility of the client is to provide a web interface for which users can visualize and interact with their session's data. The client will talk both with the Next.js server (to make api calls specific to the application), and to the Websocket Server (for receiving real-time updates from the Spotify queue).
+
+#### 2. Next.js Server
+
+The responsibility of the server is to maintain and arbitrate the state of a given session (as well as to serve front-end files that will be used by the client, but this is all done behind the scenes so no need to worry too much about this). This means that any call that will interact with a user's Spotify queue must travel through the Next.js server via one of its api endpoints (defined in /api/spotify/). In addition to this, the server provides clear methods for initializing and connecting to sessions (/api/sessionDB/{connect | create}). This also means that the Next.js Server is responsible for the destruction of said sessions and any related clean up calls to the database ** yet to be implemented **.
+
+#### 2.1. Database!!
+Speaking of the database, a dedicated library of database focused functions are defined within the /database/db.ts file. These functions are available for access by both the Next.js server and its Websocket counterpart, but should **not** be utilized within any direct client component. In addition to this, you will find the schema of said database is accessible within the /database/ directory.
+
+For development in a local environment, setting up your database to consume mock data should be as simple as running **./pg_startup.sh** (more info [here](#postgresql-setup)).
+
+#### 3. Websocket Server
+
+In addition to the Next.js server, Green Monster Jelly also utilizes the Websocket protocol to enable minimal overhead, real-time (or relatively real-time) updates to a clients' User Interfaces when the Spotify queue is mutated. 
+
+The reason behind this decision stems from a quite tricky problem with the Spotify API. Essentially, there is no way of being notified if a change has occurred within the users queue. This would be fine if we could completely track the state of a queue from requests made by our clients to the Spotify api (which we can), but does not account for changes made by the host off of their own Spotify application.
+
+The way around this is to poll the spotify queue every so often (this number can vary but we should take into account the rate limit for the number of spotify api calls that can be made by our application if we do this too often while also accounting for the potential loss of user experience if we wait too long). By polling the spotify queue, then determining differences with the existing queue in our application's database, we can quickly determine if the queue should be updated.
+
+The reason we use Websockets is to then quickly disperse the updated information to each of the client's within a session, without 
