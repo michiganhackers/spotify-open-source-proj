@@ -21,8 +21,16 @@ export async function POST(req: Request) {
             { status: 404 }
         )
     }
-    
-    const user = await CreateUser(username, sid, false);
+
+    try {
+        const user = await CreateUser(username, sid, false);
+    }
+    catch (e) {
+        return NextResponse.json(
+            { message: e },
+            { status: 404 }
+        )
+    }
     
     // If passes all checks, redirect to session page
     // redirect('/session/' + sid)

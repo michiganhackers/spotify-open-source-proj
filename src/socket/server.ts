@@ -16,6 +16,7 @@ const io = new Server({
     }
 });
 
+var checkQueueUpdatesInterval : any;
 io.on("connection", (socket) => {
 
     const sid : string = socket.handshake.auth.token;  
@@ -26,7 +27,10 @@ io.on("connection", (socket) => {
     // IDEA: Don't emit addSongToUI inside of sendSongToSocket
     //       Instead, have one function running a constant check for updates to the queue 
     /* TODO: IF HOST */
-    var checkQueueUpdatesInterval = setInterval(async () => {
+    if(checkQueueUpdatesInterval)
+        clearInterval(checkQueueUpdatesInterval);
+
+    checkQueueUpdatesInterval = setInterval(async () => {
         try {
             await checkQueueUpdates(sid, io);
         }
@@ -51,6 +55,7 @@ io.on("connection", (socket) => {
     })
 
     socket.on("disconnect", () => {
+        console.log("Disconnecting from socket for " + sid);
         clearInterval(checkQueueUpdatesInterval);
     })
 });
@@ -60,7 +65,7 @@ io.listen(8080);
 
 
 async function checkQueueUpdates(sid : string, io : any) : Promise<boolean> {
-    console.log("Checking queue disparities...");
+    console.log("Checking queue disparities for " + sid);
     const access_token = await GetAccessToken(sid);
     const url = 'http://localhost:3000/api/spotify/getQueue';
     const response = await fetch(url, { 

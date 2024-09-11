@@ -7,7 +7,7 @@ import { handleSpotifyAuth } from '@/utils';
 import 'dotenv/config';
 
 export default function Home() {
-  const [guestCode, setGuestCode] = useState("");
+  const [guestCode, setGuestCode] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
   const [username, setUsername] = useState("");
 
   const router = useRouter();

@@ -13,6 +13,7 @@ export function Session({
 }) {
 
     const socket = socketIO(sid);
+    socket.connect(); // connect to ws
 
     if(isHost === "true")
         return <SessionHost 
@@ -70,10 +71,13 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
 
-  socket.connect(); // connect to ws
+  useEffect(() => {
+    console.log(songList);
+    console.log("Updated songList");
+  }, [songList])
   
   // Initialize starting queue from connection
-  for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
+  /*for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
     const songData = 
         {  
             songId: initQueue[i].song_id,
@@ -83,7 +87,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
             placement: initQueue[i].placement,
         }
     setSongList((prevSongs) => [...prevSongs, songData]);
- }
+ }*/
 
   // Add song to end of the queue with all data needed for UI
   const addSongToQueue = (songInput: any) => {
@@ -91,8 +95,6 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   };
 
   function addSongListener(songData : any) {
-    // socket.off("addSongToUI", addSongListener); 
-    //console.log(songData)
     addSongToQueue(songData); 
   }
 
@@ -108,7 +110,9 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
         artistName: song.artistName
     }))
 
-    setSongList(updatedQueue);
+    console.log(updatedQueue);
+
+    setSongList([...updatedQueue]);
   });
 
   // Handles song submission then clears input
