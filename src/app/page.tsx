@@ -3,7 +3,7 @@ import { stringify } from 'querystring';
 import { useState, useEffect } from 'react';
 import { redirect, useRouter } from 'next/navigation'
 import { Router } from 'next/router';
-import { handleSpotifyAuth } from '@/utils';
+import { handleSpotifyAuth } from '@/src/utils';
 import 'dotenv/config';
 
 export default function Home() {
