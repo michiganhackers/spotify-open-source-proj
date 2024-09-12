@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import { GetAccessToken, GetQueue, GetSessionData, ReplaceQueue } from "../database/db"
-import { handleSpotifyAuth } from "@/utils";
+import { handleSpotifyAuth } from "@/src/utils";
 import 'dotenv/config'
 import { log } from "console";
 import { deprecate } from "util";
