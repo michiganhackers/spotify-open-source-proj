@@ -1,4 +1,8 @@
-/* API endpoint for adding a song to session queue */
+/* 
+API endpoint to be redirected to by spotify authorization API.
+Gets the access token from spotify token API using 
+results from authorization.
+*/
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";

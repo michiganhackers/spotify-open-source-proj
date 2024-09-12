@@ -14,6 +14,6 @@ export function handleSpotifyAuth(client_id : string | undefined, redirect_uri :
         client_id: client_id,
         scope: scope,
         redirect_uri: redirect_uri,
-        state
+        state: state
     })}`
 }

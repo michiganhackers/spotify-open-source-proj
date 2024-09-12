@@ -36,6 +36,31 @@ Then rerun
 
 This should spin up a docker container preset for postgresql that you will use for development of the application.
 
+### Set Up Spotify Development App
+
+1. Please navigate to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Create an account if needed
+3. Select Create App
+4. Give your app a name (ex: GMJ Dev App) and a description. For the website portion, input http://localhost:3000, and for redirect URIs, input http://localhost:3000/api/spotify/getToken. Select Web API for the API you want to use. Then create app.
+5. Finally, navigate to the app you just created, select settings, and be ready to copy the client id and client secret into your .env file in the next step.
+
+### Define .env File
+
+Your .env file should be located at the top-level of your project directory. Inside, please define the following variables to be used throughout the application.
+```
+PG_URI="postgres://dev:<your-password>@localhost:5432/dev"
+PG_USER="dev"
+PG_PASSWORD="<your-password>"
+
+APP_SERVER="http://localhost:3000"
+WS_SERVER="http://localhost:8080"
+WS_STARTUP="node --loader ts-node/esm src/socket/server.ts"
+
+NEXT_PUBLIC_SPOTIFY_CLIENT_ID="<your-spotify-client-id>"
+SPOTIFY_CLIENT_ID="<your-spotify-client-id>"
+SPOTIFY_CLIENT_SECRET="<your-spotify-client-secret>"
+```
+
 ### Next.js Application Setup
 
 To run the development server:
