@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
+import { render } from 'react-dom'
 
 export function Session({
     isHost, sid, username,
@@ -71,10 +72,10 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
 
-  useEffect(() => {
+  /*useEffect(() => {
     console.log(songList);
     console.log("Updated songList");
-  }, [songList])
+  }, [songList]) */
   
   // Initialize starting queue from connection
   /*for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
@@ -111,7 +112,6 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
     }))
 
     console.log(updatedQueue);
-
     setSongList([...updatedQueue]);
   });
 
@@ -192,8 +192,8 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   return (
     <div id="QueueWrapper">
       <h1>Queue</h1>
-      {songList.map((song, index) => (
-        <div key={index}>
+      {songList.map((song) => (
+        <div key={song.songId}>
           <Song 
             id={song.songId}
             name={song.songName}
