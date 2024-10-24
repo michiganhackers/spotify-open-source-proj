@@ -117,3 +117,21 @@ The reason behind this decision stems from a quite tricky problem with the Spoti
 The way around this is to poll the spotify queue every so often (this number can vary but we should take into account the rate limit for the number of spotify api calls that can be made by our application if we do this too often while also accounting for the potential loss of user experience if we wait too long). By polling the spotify queue, then determining differences with the existing queue in our application's database, we can quickly determine if the queue should be updated.
 
 The reason we use Websockets is to then quickly disperse the updated information to each of the client's within a session, without having to maintain information about each client's IP and create a new TCP connection for each client on every queue change. Basically, it minimizes the overhead for maintaining an up-to-date queue, and easily allows these updates to be distributed to all of the members of a session.
+
+### Authentication Flow
+
+Authenticating for this application involves one of two steps.
+
+1. HOST: Authorization of Spotify account with GMJ
+![Spotify Authorization Workflow](docs-authorization-workflow.png)
+All files and their respective functions involved:
+- /page.tsx: Responsible for requesting authorization from the spotify API, then redirects back to /api/Spotify/getToken
+- /api/Spotify/getToken: Uses auth code returned from Spotify API to request access/refresh tokens for a session, then creates the session and redirects the user to the brand new session's page (/session/page.tsx)
+2. GUEST: Insertion of guest code for a valid session.  
+- /page.tsx: Contains form for users to request to join a specific session via the connectToSession() function
+- /api/sessionDB/connect/: API endpoint reached by connectToSession(), responsible for verifying guest code 
+integrity, 
+    - Creates new user and returns 200 if guest code is valid
+    - Returns 401 (Unauthorized) if guest code is invalid
+
+

@@ -140,10 +140,6 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
             artistName: data.responseBody.artistName, 
             placement: data.responseBody.placement,
         }
-        // GOAL: Update UI of all other clients
-        // ACTION: Talk to WSS using designated event
-        // socket.emit("sendSongToSocket", songData)
-        // addSongToQueue(songData);
     }).catch((error) => console.log(error))
 
   };

@@ -8,7 +8,7 @@ import 'dotenv/config';
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
 
   const router = useRouter();
   
@@ -27,8 +27,8 @@ export default function Home() {
                 <input type="text" placeholder='Username' maxLength={6} name="username" onChange={(e) => setUsername(e.target.value)}/>
             </form>
             <button className="SubmitButton" onClick={() => {
-                sessionStorage.setItem("username", username);
-                sessionStorage.setItem("isHost", "true");
+                sessionStorage.setItem("username", username); // change this to a nextjs cookie (server-side)
+                sessionStorage.setItem("isHost", "true"); // change this to a nextjs cookie (server-side)
                 const client_id : string | undefined = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID; // Spotify developer client id for API calls
                 const redirect_uri : string = 'http://localhost:3000/api/spotify/getToken'
                 const scope : string = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';

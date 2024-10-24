@@ -17,8 +17,8 @@ export async function POST(req: Request) {
     }
     catch (e) {
         return NextResponse.json(
-            { message: e },
-            { status: 404 }
+            { message: "Guest code incorrect" },
+            { status: 401 }
         )
     }
 
@@ -27,8 +27,7 @@ export async function POST(req: Request) {
     }
     catch (e) {
         return NextResponse.json(
-            { message: e },
-            { status: 404 }
+            { status: 500 }
         )
     }
     

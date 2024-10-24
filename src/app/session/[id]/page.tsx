@@ -4,6 +4,7 @@ import { Session } from './client'
 import 'dotenv/config'
 
 export default function SessionPage({ params } : { params: { id: string} }) {
+    // To make this a server-side component, we can receive each of the below variables as next cookies
     const [isHost, setIsHost] = useState("");
     const [username, setUsername] = useState("");
     const [hostName, setHostName] = useState("");
