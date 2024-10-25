@@ -10,10 +10,8 @@ export async function POST(req: Request) {
     const data = await req.json();
     const accessToken : string = data.accessToken;
     const refreshToken : string = data.refreshToken;
-    const username : string = data.username;
     
     const sid = await CreateSession(accessToken, refreshToken);
-    const host = await CreateUser(username, sid, true);
     
     // return status 201
     return NextResponse.json(

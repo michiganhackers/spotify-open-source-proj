@@ -20,6 +20,24 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             let host = "";
             setHostName(host || "");
         }
+        
+        // Add host's name to DB now that session has been created
+        if(sessionStorage.getItem('isHost') === "true") {
+            fetch('/api/sessionDB/addHostName', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: sessionStorage.getItem('username')
+                })
+            })
+            .then((response) => {
+                if(!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+                return response.json()
+            })
+            .catch((error) => console.log(error))
+        }
     }, []);
 
     /*

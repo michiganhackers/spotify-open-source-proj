@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     });
 
     if(!response.ok)
-        throw Error(response.statusText);    
+        throw Error(`${response.status} ${response.statusText}`);
 
     const data = await response.json();
     const queue : any[] = [];
