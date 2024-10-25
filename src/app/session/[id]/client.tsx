@@ -237,10 +237,12 @@ export function SessionGuest( {hostName, clientNames, queue, username, socket, s
   return (
     <>
       <div id="session-header">
-        <button>Exit</button>
-        <h1>{username}</h1>
-        <h1>Host: {hostName}</h1>
-        <h1>Guest Code: {sid}</h1>
+        <h1 className="user-name">{username}</h1>
+        <div className="session-header-middle">
+          <h1 className="session-header-host">{hostName}'s Session</h1>
+          <h1 className="session-header-guest-code">{sid}</h1>
+        </div>
+        <button className="end-session-button">Exit</button>
       </div>
       <div id="session-body">
         <Queue
@@ -261,9 +263,9 @@ export function SessionHost({hostName, clientNames, queue, username, socket, sid
     return (
         <>
         <div id="session-header">
-          <button>End Session</button>
-          <h1>{username}</h1>
-          <h1>Guest Code: {sid}</h1>
+          <h1 className="user-name">{username}</h1>
+          <h1 className="guest-code">{sid}</h1>         
+          <button className="end-session-button">End Session</button>
         </div>
         <div id="session-body">
           <Queue

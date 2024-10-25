@@ -17,6 +17,8 @@ export default function SessionPage({ params } : { params: { id: string} }) {
         if (typeof(window) !== 'undefined' && typeof(sessionStorage) !== 'undefined') {
             setIsHost(sessionStorage.getItem('isHost') || "");
             setUsername(sessionStorage.getItem('username') || "");
+            let host = "";
+            setHostName(host || "");
         }
     }, []);
 

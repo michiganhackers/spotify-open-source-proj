@@ -155,9 +155,13 @@ img {
     position: absolute;
     top: 0;
     left: 0;
-    height: 15%;
+    height: 80px;
     background-color: black;
     border: purple solid 3px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 20px;
+    column-count: 4;
 }
 
 #session-body {
@@ -251,4 +255,51 @@ img {
 
 #QueueInterface {
   margin-top: 20px;
+}
+
+#session-header-left{
+
+  padding-top: 10px;
+
+}
+
+.end-session-button{
+  font-size:20px;
+  margin:10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guest-code{
+  font-size:40px;
+  margin-right:40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name{
+  font-size:20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-header-host{
+  font-size:20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-header-guest-code{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size:30px
+}
+
+.session-header-middle{
+  padding-right:30px;
 }

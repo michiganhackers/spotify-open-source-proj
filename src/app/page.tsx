@@ -49,7 +49,7 @@ export default function Home() {
             </form>
             <button className="SubmitButton" onClick={() => {
                 sessionStorage.setItem("username", username);
-                sessionStorage.setItem("isHost", "true");
+                sessionStorage.setItem("isHost", "false");
                 connectToSession(guestCode, username, router)}}>
                     Join
             </button>
