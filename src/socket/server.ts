@@ -32,7 +32,7 @@ io.on("connection", (socket) => {
 
     checkQueueUpdatesInterval = setInterval(async () => {
         try {
-            await checkQueueUpdates(sid, io);
+            //await checkQueueUpdates(sid, io);
         }
         catch (error : any) {
             console.error(error);

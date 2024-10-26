@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // REQUIRES: req contains the access token of the host of the session
 export async function POST(req: Request) {
     const reqData = await req.json();
-    const access_token : string = reqData.accessToken;
+    const access_token : string = reqData.accessToken;  
 
     var bearer = 'Bearer ' + access_token;
     const url = 'https://api.spotify.com/v1/me/player/queue';
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     });
 
     if(!response.ok)
-        throw Error(response.statusText);    
+        throw Error("access token: " + access_token + " response code: " + response.status);    
 
     const data = await response.json();
     const queue : any[] = [];

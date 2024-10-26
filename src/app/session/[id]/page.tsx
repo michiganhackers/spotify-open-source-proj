@@ -10,7 +10,8 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     const [hostName, setHostName] = useState("");
     const [clientNames, setClientNames] = useState([]);
     const [queue, setQueue] = useState([]);
-    
+    const [atoken, setAtoken] = useState("");
+
     let sid : string = params.id;
 
     useEffect(() => {
@@ -20,32 +21,72 @@ export default function SessionPage({ params } : { params: { id: string} }) {
         }
     }, []);
 
-    /*
     useEffect(() => {
-        console.log("mounting...")
+ 
+        const getAccessToken = () => {
+            //console.log("getting token");
+          
+            fetch('http://localhost:3000/api/spotify/getAccessToken', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ sid }),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error(response.statusText);
+                }
+                return response.json();
+              })
+              .then((data: { accesstoken: string }) => {
+                //console.log("access token:", data.accesstoken);
+                if(atoken === ""){
+                    setAtoken(data.accesstoken);
+                }   
+              })
+              .catch((error) => {
+                console.error("error:", error);
+              });
+          };
+        
+      getAccessToken();
 
-        fetch('http://localhost:3000/api/sessionDB/initSession', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sid: sid,
-        }),
-        }).then((response) => {
-            if(!response.ok)
-                return new Error(response.statusText);
+      }, []);
 
-            return response.json();
-        }).then((sessionData) => {
-            setHostName(sessionData.hostName);
-            setClientNames(sessionData.clientNames);
-            setQueue(sessionData.queue);
-        })
+      useEffect(() => {
+          const getQueue = () => {
+          
+            fetch('http://localhost:3000/api/spotify/getQueue', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ accessToken: atoken }), 
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error(response.statusText);
+                }
+                return response.json();
+              })
+              .then((data) => {
+                //console.log("Queue data:", data.queue);
+               
+                setQueue(data.queue);
+                  
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+          };
 
-        return () => console.log("unmounting...")
-    }, []); */
-    
+          if(atoken){
+            getQueue();
+          }
+        
+      }, [atoken]);
+
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
             <Session
@@ -60,3 +101,4 @@ export default function SessionPage({ params } : { params: { id: string} }) {
         </main>  
     )
 }
+
