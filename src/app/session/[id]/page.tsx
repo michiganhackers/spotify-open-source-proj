@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from './client'
 import 'dotenv/config'
 
+
 export default function SessionPage({ params } : { params: { id: string} }) {
     // To make this a server-side component, we can receive each of the below variables as next cookies
     const [isHost, setIsHost] = useState("");
@@ -14,13 +15,16 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     let sid : string = params.id;
 
     useEffect(() => {
+
+        
+
         if (typeof(window) !== 'undefined' && typeof(sessionStorage) !== 'undefined') {
             setIsHost(sessionStorage.getItem('isHost') || "");
             setUsername(sessionStorage.getItem('username') || "");
             let host = "";
             setHostName(host || "");
         }
-        
+
         // Add host's name to DB now that session has been created
         if(sessionStorage.getItem('isHost') === "true") {
             fetch('/api/sessionDB/addHostName', {
@@ -29,7 +33,8 @@ export default function SessionPage({ params } : { params: { id: string} }) {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    username: sessionStorage.getItem('username')
+                    username: sessionStorage.getItem('username'),
+                    sid: params.id
                 })
             })
             .then((response) => {
@@ -37,6 +42,26 @@ export default function SessionPage({ params } : { params: { id: string} }) {
                 return response.json()
             })
             .catch((error) => console.log(error))
+        }
+        else{
+            fetch(`/api/sessionDB/getHostName?session_id=${params.id}`, {
+                method: "GET", 
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then((response) => {
+                console.log(response);
+                if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+                return response.json();
+            })
+            .then((data) => {
+                console.log(data.hostname);
+                setHostName(data.hostname);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
         }
     }, []);
 
