@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
-import { render } from 'react-dom'
+//import { render } from 'react-dom'
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
   return (
@@ -86,12 +86,12 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
 
   useEffect(() => {
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-      //changed songData because the outputted keys were not what the keys used to be
+      //the initSession does not retrieve the songID
       const songData = {
-        songId: initQueue[i].songId,
-        songName: initQueue[i].songName,
-        albumCover: initQueue[i].albumCover,
-        artistName: initQueue[i].artistName,
+        songId: i,
+        songName: initQueue[i].song_name,
+        albumCover: initQueue[i].album_cover,
+        artistName: initQueue[i].artist_name,
         placement: initQueue[i].placement,
       };
 

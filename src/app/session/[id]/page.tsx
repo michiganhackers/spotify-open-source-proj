@@ -66,31 +66,32 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     }, []);
 
       useEffect(() => {
-        const mountQueue = () => {
-            fetch('http://localhost:3000/api/spotify/mountQueue', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ sid }),
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error(response.statusText);
-                }
-                return response.json();
-              })
-              .then((data) => {
-                console.log("queue: ", data.queue);
-                setQueue(data.queue);
-              })
-              .catch((error) => {
-                console.error("error:", error);
-              });
-          };
-        
-        mountQueue();
-
+        fetch('http://localhost:3000/api/sessionDB/initSession', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sid }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(response.statusText);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            //i have no clue whether i actually need to handle this at all
+            /*
+            if(!isHostNameSet){
+              setHostName(data.hostName)
+              setIsHostNameSet(true)
+            }*/
+            setClientNames(data.clientNames)
+            setQueue(data.queue);
+          })
+          .catch((error) => {
+            console.error("error:", error);
+          });
       }, []);
 
     return (
