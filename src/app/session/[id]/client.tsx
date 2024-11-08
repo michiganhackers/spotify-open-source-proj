@@ -70,25 +70,14 @@ interface QueueProps {
   onSongAdded: (song: string) => void;
 }
 
-
 function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket: any, username: string, sid: string }) {
   // Function body
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
 
-  //console.log("outside of function: " + JSON.stringify(initQueue, null, 2));
-
   useEffect(() => {
-
-    //console.log("IN QUEUE FUNCTION: " + JSON.stringify(initQueue, null, 2));
-
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-
-      //console.log("songid: ", JSON.stringify(initQueue[i]));
-      //console.log("keys: ", Object.keys(initQueue[i]));
-      //console.log("IN LOOP FUNCTION: " + JSON.stringify(initQueue, null, 2));
-
       //changed songData because the outputted keys were not what the keys used to be
       const songData = {
         songId: initQueue[i].songId,
@@ -98,16 +87,10 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
         placement: initQueue[i].placement,
       };
 
-      //print out each song
-      //console.log("SONG DATA: ", songData);
-
       setSongList((prevSongs) => [...prevSongs, songData]);
     }
 
-  }, [initQueue]); //depend on initQueue, run when initQueue is not []
-
-  //print song list to console(debugging)
-  //console.log("songlist: " + JSON.stringify(songList));
+  }, [initQueue]);
 
   // Add song to end of the queue with all data needed for UI
   const addSongToQueue = (songInput: any) => {
