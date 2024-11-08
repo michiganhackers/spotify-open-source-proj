@@ -11,20 +11,11 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     const [hostName, setHostName] = useState("");
     const [clientNames, setClientNames] = useState([]);
     const [queue, setQueue] = useState([]);
+    const [isHostNameSet, setIsHostNameSet] = useState(false);
     
     let sid : string = params.id;
 
     useEffect(() => {
-
-        
-
-        if (typeof(window) !== 'undefined' && typeof(sessionStorage) !== 'undefined') {
-            setIsHost(sessionStorage.getItem('isHost') || "");
-            setUsername(sessionStorage.getItem('username') || "");
-            let host = "";
-            setHostName(host || "");
-        }
-
         // Add host's name to DB now that session has been created
         if(sessionStorage.getItem('isHost') === "true") {
             fetch('/api/sessionDB/addHostName', {
@@ -34,16 +25,22 @@ export default function SessionPage({ params } : { params: { id: string} }) {
                 },
                 body: JSON.stringify({
                     username: sessionStorage.getItem('username'),
-                    sid: params.id
+                    sid: sid
                 })
             })
             .then((response) => {
                 if(!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+                
+                // Wait until host name has been set before setting isHost and username properties
+                setIsHost(sessionStorage.getItem('isHost') || "");
+                setUsername(sessionStorage.getItem('username') || "");
+                setIsHostNameSet(true); // Allow next useEffect access to call initSession now that host name is set
                 return response.json()
             })
             .catch((error) => console.log(error))
         }
         else{
+            // This functionality below should be encompassed by initSession, including the clientNames and current queue state as well
             fetch(`/api/sessionDB/getHostName?session_id=${params.id}`, {
                 method: "GET", 
                 headers: {
@@ -62,34 +59,44 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             .catch((error) => {
                 console.error("Error:", error);
             });
+
+            // If user is not Host, we know the host's id must have already been set
+            setIsHostNameSet(true);
         }
     }, []);
 
-    /*
-    useEffect(() => {
-        console.log("mounting...")
+    
+    /*useEffect(() => {
+        if(isHostNameSet) {
+            console.log("mounting...")
 
-        fetch('http://localhost:3000/api/sessionDB/initSession', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sid: sid,
-        }),
-        }).then((response) => {
-            if(!response.ok)
-                return new Error(response.statusText);
+            fetch('http://localhost:3000/api/sessionDB/initSession', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+            sid: sid,
+            }),
+            }).then((response) => {
+                if(!response.ok)
+                    return new Error(response.statusText);
 
-            return response.json();
-        }).then((sessionData) => {
-            setHostName(sessionData.hostName);
-            setClientNames(sessionData.clientNames);
-            setQueue(sessionData.queue);
-        })
+                return response.json();
+            }).then((sessionData) => {
+                console.log(sessionData.hostName)
+                console.log(sessionData.clientNames)
+                console.log(sessionData.queue)
+                setHostName(sessionData.hostName);
+                setClientNames(sessionData.clientNames);
+                setQueue(sessionData.queue);
+            })
+            .catch((error) => console.log(error))
+        }
+        
 
         return () => console.log("unmounting...")
-    }, []); */
+    }, [isHostNameSet]); */
     
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
