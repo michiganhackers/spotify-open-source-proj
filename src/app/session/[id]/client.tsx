@@ -2,10 +2,17 @@
 import { useEffect, useState } from 'react'
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
-import { AddSongToQueue, GetQueue, ReplaceQueue } from '@/src/database/db'
-import { memo } from 'react'
-import { isConstructorDeclaration } from 'typescript'
+import { AddSongToQueue } from '@/src/database/db'
+import { render } from 'react-dom'
 
+const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
+  return (
+    <div className="toast">
+      {message}
+      <button onClick={onClose}>×</button>
+    </div>
+  );
+};
 
 export function Session({
   isHost, sid, username,
@@ -75,6 +82,7 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
@@ -134,16 +142,17 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
       if (!response.ok) throw Error(response.statusText);
       return response.json();
     }).then((data) => {
-      const songData =
-      {
-        songId: songId,
-        songName: data.responseBody.songName,
-        albumCover: data.responseBody.albumCover,
-        artistName: data.responseBody.artistName,
-        placement: data.responseBody.placement,
-      }
+        const songData = 
+        {  
+            songId: songId,
+            songName: data.responseBody.songName,
+            albumCover: data.responseBody.albumCover,
+            artistName: data.responseBody.artistName, 
+            placement: data.responseBody.placement,
+        };
+      setToastMessage(` Successfully added: ${data.responseBody.songName}`);
+      setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
     }).catch((error) => console.log(error))
-
   };
 
   // Can be used to have song "suggestions" for similar song names later
@@ -215,7 +224,12 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
           }
           }
         />
-        <div id="dropdown">
+        <div id="dropdown" style={{ maxHeight: '600px', 
+          overflowY: 'scroll', 
+          overflowX: 'hidden',
+          scrollbarWidth: 'none', 
+          }}
+          >
           {songQuery.map((song, index) => (
             <button onClick={() => { handleAddSong(song.songId) }} key={index} className="lookup-song-button">
               <Song
@@ -228,7 +242,7 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
           ))}
         </div>
       </div>
-
+      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
     </div>
   );
 }
@@ -239,10 +253,12 @@ export function SessionGuest({ hostName, clientNames, queue, username, socket, s
   return (
     <>
       <div id="session-header">
-        <button>Exit</button>
-        <h1>{username}</h1>
-        <h1>Host: {hostName}</h1>
-        <h1>Guest Code: {sid}</h1>
+        <h1 className="user-name">{username}</h1>
+        <div className="session-header-middle">
+          <h1 className="session-header-host">{hostName}'s Session</h1>
+          <h1 className="session-header-guest-code">{sid}</h1>
+        </div>
+        <button className="end-session-button">Exit</button>
       </div>
       <div id="session-body">
         <Queue
@@ -259,22 +275,22 @@ export function SessionGuest({ hostName, clientNames, queue, username, socket, s
 
 
 // TODO: Add host components where necessary
-export function SessionHost({ hostName, clientNames, queue, username, socket, sid }: any) {
-  return (
-    <>
-      <div id="session-header">
-        <button>End Session</button>
-        <h1>{username}</h1>
-        <h1>Guest Code: {sid}</h1>
-      </div>
-      <div id="session-body">
-        <Queue
-          initQueue={queue}
-          socket={socket}
-          username={username}
-          sid={sid}
-        />
-      </div>
-    </>
-  );
-}
+export function SessionHost({hostName, clientNames, queue, username, socket, sid } : any) {
+    return (
+        <>
+        <div id="session-header">
+          <h1 className="user-name">{username}</h1>
+          <h1 className="guest-code">{sid}</h1>         
+          <button className="end-session-button">End Session</button>
+        </div>
+        <div id="session-body">
+          <Queue
+            initQueue={queue}
+            socket={socket}
+            username={username}
+            sid={sid}
+          />  
+        </div>
+        </>
+    );
+  }

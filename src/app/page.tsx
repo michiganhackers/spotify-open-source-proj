@@ -32,7 +32,7 @@ export default function Home() {
                 sessionStorage.setItem("username", username); // change this to a nextjs cookie (server-side)
                 sessionStorage.setItem("isHost", "true"); // change this to a nextjs cookie (server-side)
                 const client_id : string | undefined = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID; // Spotify developer client id for API calls
-                const redirect_uri : string = 'http://localhost:3000/api/spotify/getToken'
+                const redirect_uri : string = `http://localhost:3000/api/spotify/getToken`
                 const scope : string = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
                 handleSpotifyAuth(client_id, redirect_uri, scope);
                 }}>
@@ -51,7 +51,7 @@ export default function Home() {
             </form>
             <button className="SubmitButton" onClick={() => {
                 sessionStorage.setItem("username", username);
-                sessionStorage.setItem("isHost", "true");
+                sessionStorage.setItem("isHost", "false");
                 connectToSession(guestCode, username, router)}}>
                     Join
             </button>

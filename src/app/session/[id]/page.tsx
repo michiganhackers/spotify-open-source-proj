@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from './client'
 import 'dotenv/config'
 
+
 export default function SessionPage({ params } : { params: { id: string} }) {
     // To make this a server-side component, we can receive each of the below variables as next cookies
     const [isHost, setIsHost] = useState("");
@@ -10,13 +11,57 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     const [hostName, setHostName] = useState("");
     const [clientNames, setClientNames] = useState([]);
     const [queue, setQueue] = useState([]);
-
+    const [isHostNameSet, setIsHostNameSet] = useState(false);
+    
     let sid : string = params.id;
 
     useEffect(() => {
-        if (typeof(window) !== 'undefined' && typeof(sessionStorage) !== 'undefined') {
-            setIsHost(sessionStorage.getItem('isHost') || "");
-            setUsername(sessionStorage.getItem('username') || "");
+        // Add host's name to DB now that session has been created
+        if(sessionStorage.getItem('isHost') === "true") {
+            fetch('/api/sessionDB/addHostName', {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: sessionStorage.getItem('username'),
+                    sid: sid
+                })
+            })
+            .then((response) => {
+                if(!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+                
+                // Wait until host name has been set before setting isHost and username properties
+                setIsHost(sessionStorage.getItem('isHost') || "");
+                setUsername(sessionStorage.getItem('username') || "");
+                setIsHostNameSet(true); // Allow next useEffect access to call initSession now that host name is set
+                return response.json()
+            })
+            .catch((error) => console.log(error))
+        }
+        else{
+            // This functionality below should be encompassed by initSession, including the clientNames and current queue state as well
+            fetch(`/api/sessionDB/getHostName?session_id=${params.id}`, {
+                method: "GET", 
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then((response) => {
+                console.log(response);
+                if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+                return response.json();
+            })
+            .then((data) => {
+                console.log(data.hostname);
+                setHostName(data.hostname);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+
+            // If user is not Host, we know the host's id must have already been set
+            setIsHostNameSet(true);
         }
     }, []);
 

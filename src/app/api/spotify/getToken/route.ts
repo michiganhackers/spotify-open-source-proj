@@ -6,6 +6,7 @@ results from authorization.
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { useRouter } from "next/router"
 import { NextResponse } from 'next/server'
 import 'dotenv/config'
 
@@ -23,9 +24,6 @@ export async function GET(req: Request) {
         throw new Error('Authentication failed.');
     }
     // const state = reqUrl.searchParams.get('state');
-
-    //TODO: Replace host with username (consider appending username to redirect_uri in initial call)
-    const username = "host";
 
     var accessToken, refreshToken : string;
     const tokenResponse = await fetch(TOKEN_ENDPOINT, {
@@ -51,7 +49,6 @@ export async function GET(req: Request) {
     const createResponse = await fetch(process.env.APP_SERVER + '/api/sessionDB/create', { 
         method: 'POST',
         body: JSON.stringify({
-            username : username,
             accessToken: accessToken,
             refreshToken: refreshToken
         }) 

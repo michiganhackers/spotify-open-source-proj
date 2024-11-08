@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const user = await CreateUser(username, sid, false);
+        await CreateUser(username, sid, false);
     }
     catch (e) {
         return NextResponse.json(

@@ -201,3 +201,26 @@ export async function ReplaceQueue(sid : string, queue : any[]) : Promise<void> 
     });
 }
     
+
+export async function GetHostName(session_id: string) {
+    try {
+        const result = await sql`
+            SELECT users.username
+            FROM users
+            JOIN sessions ON users.user_id = sessions.host_id
+            WHERE sessions.session_id = ${session_id};
+        `;
+        
+
+
+
+        if (result.length === 0) {
+            return null; 
+        }
+        
+        return result[0]["username"];
+    } catch (error) {
+        console.error('Error fetching host name:', error);
+        throw new Error('Error fetching host name from the database.');
+    }
+}

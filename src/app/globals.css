@@ -155,9 +155,13 @@ img {
     position: absolute;
     top: 0;
     left: 0;
-    height: 15%;
+    height: 80px;
     background-color: black;
     border: purple solid 3px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 20px;
+    column-count: 4;
 }
 
 #session-body {
@@ -209,8 +213,17 @@ img {
 }
 
 .song {
-    background-color: rgb(46, 43, 43);
-    display: flex;
+  background-color: rgb(46, 43, 43);
+  display: flex;
+  transition: background-color 0.3s; 
+}
+
+.song:hover {
+  background-color: rgb(80, 80, 80);
+}
+
+.song:active {
+  background-color: rgb(60, 60, 60);
 }
 
 .cover-art img {
@@ -252,3 +265,75 @@ img {
 #QueueInterface {
   margin-top: 20px;
 }
+
+#session-header-left{
+
+  padding-top: 10px;
+
+}
+
+.end-session-button{
+  font-size:20px;
+  margin:10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guest-code{
+  font-size:40px;
+  margin-right:40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name{
+  font-size:20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-header-host{
+  font-size:20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-header-guest-code{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size:30px
+}
+
+.session-header-middle{
+  padding-right:30px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(75, 65, 65, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  transition: opacity 0.5s;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 600px;
+}
+.toast button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
