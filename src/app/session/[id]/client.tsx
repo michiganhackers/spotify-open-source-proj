@@ -5,6 +5,15 @@ import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
 import { render } from 'react-dom'
 
+const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
+  return (
+    <div className="toast">
+      {message}
+      <button onClick={onClose}>×</button>
+    </div>
+  );
+};
+
 export function Session({
     isHost, sid, username,
     hostName, clientNames, queue
@@ -71,6 +80,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
 
   /*useEffect(() => {
     console.log(songList);
@@ -139,9 +149,10 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
             albumCover: data.responseBody.albumCover,
             artistName: data.responseBody.artistName, 
             placement: data.responseBody.placement,
-        }
+        };
+      setToastMessage(` Successfully added: ${data.responseBody.songName}`);
+      setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
     }).catch((error) => console.log(error))
-
   };
 
   // Can be used to have song "suggestions" for similar song names later
@@ -213,7 +224,12 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
           }
         }
         />
-        <div id="dropdown">
+        <div id="dropdown" style={{ maxHeight: '600px', 
+          overflowY: 'scroll', 
+          overflowX: 'hidden',
+          scrollbarWidth: 'none', 
+          }}
+          >
           {songQuery.map((song, index) => (
           <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
             <Song 
@@ -226,7 +242,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
         ))}
         </div>
       </div>
-      
+      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
     </div>
   );
 }

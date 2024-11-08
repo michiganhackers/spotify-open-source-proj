@@ -213,8 +213,17 @@ img {
 }
 
 .song {
-    background-color: rgb(46, 43, 43);
-    display: flex;
+  background-color: rgb(46, 43, 43);
+  display: flex;
+  transition: background-color 0.3s; 
+}
+
+.song:hover {
+  background-color: rgb(80, 80, 80);
+}
+
+.song:active {
+  background-color: rgb(60, 60, 60);
 }
 
 .cover-art img {
@@ -303,3 +312,28 @@ img {
 .session-header-middle{
   padding-right:30px;
 }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(75, 65, 65, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  transition: opacity 0.5s;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 600px;
+}
+.toast button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: 10px;
+}
+

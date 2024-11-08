@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
 export async function POST(req: Request) {
     // Inside of req, there should be a url for the server to fetch using the access token
     const reqData = await req.json();
-    const url : string = "https://api.spotify.com/v1/search?q=" + reqData.songName + "&type=track&limit=5";
+    const url : string = "https://api.spotify.com/v1/search?q=" + reqData.songName + "&type=track&limit=10";
     const sid : string = reqData.sid;
     //q=name:<user_input>&type=track  
 
