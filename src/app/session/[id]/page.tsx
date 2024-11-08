@@ -10,7 +10,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     const [hostName, setHostName] = useState("");
     const [clientNames, setClientNames] = useState([]);
     const [queue, setQueue] = useState([]);
-    const [atoken, setAtoken] = useState("");
+    //const [atoken, setAtoken] = useState("");
 
     let sid : string = params.id;
 
@@ -20,7 +20,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             setUsername(sessionStorage.getItem('username') || "");
         }
     }, []);
-
+    /*
     useEffect(() => {
  
         const getAccessToken = () => {
@@ -86,6 +86,39 @@ export default function SessionPage({ params } : { params: { id: string} }) {
           }
         
       }, [atoken]);
+      */
+
+      useEffect(() => {
+ 
+        const mountQueue = () => {
+            //console.log("getting token");
+          
+            fetch('http://localhost:3000/api/spotify/mountQueue', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ sid }),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error(response.statusText);
+                }
+                return response.json();
+              })
+              .then((data) => {
+                //console.log("access token:", data.accesstoken);
+                console.log("data: ", data);
+                setQueue(data.queue);
+              })
+              .catch((error) => {
+                console.error("error:", error);
+              });
+          };
+        
+        mountQueue();
+
+      }, []);
 
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
