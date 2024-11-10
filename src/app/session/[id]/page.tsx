@@ -66,33 +66,35 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     }, []);
 
       useEffect(() => {
-        fetch('http://localhost:3000/api/sessionDB/initSession', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ sid }),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(response.statusText);
-            }
-            return response.json();
+        const initSession = () => {
+          fetch('http://localhost:3000/api/sessionDB/initSession', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sid }),
           })
-          .then((data) => {
-            //i have no clue whether i actually need to handle this at all
-            /*
-            if(!isHostNameSet){
-              setHostName(data.hostName)
-              setIsHostNameSet(true)
-            }*/
-            setClientNames(data.clientNames)
-            setQueue(data.queue);
-          })
-          .catch((error) => {
-            console.error("error:", error);
-          });
-      }, []);
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(response.statusText);
+              }
+              return response.json();
+            })
+            .then((data) => {
+              console.log("data: ",data)
+              setClientNames(data.clientNames)
+              setQueue(data.queue);
+            })
+            .catch((error) => {
+              console.error("error:", error);
+            });
+          }
+
+          //check if hostname is set before mounting
+          if(isHostNameSet){
+            initSession()
+          }
+      }, [isHostNameSet]); //if it mounts on start, this useEffect runs before the username + hostID is set in the database
 
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">

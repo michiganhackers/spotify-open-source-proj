@@ -85,15 +85,20 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
+
+    //songID vs song_id => when fetching straight from spotify its the former, from database its the latter
+    function getValue(data: any, key: string) {
+      return data[key] ?? data[key.replace(/([A-Z])/g, '_$1').toLowerCase()];
+    }
+
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-      //the initSession does not retrieve the songID
       const songData = {
-        songId: i,
-        songName: initQueue[i].song_name,
-        albumCover: initQueue[i].album_cover,
-        artistName: initQueue[i].artist_name,
-        placement: initQueue[i].placement,
-      };
+        songId: getValue(initQueue[i], 'songId'),
+        songName: getValue(initQueue[i], 'songName'),
+        albumCover: getValue(initQueue[i], 'albumCover'),
+        artistName: getValue(initQueue[i], 'artistName'),
+        placement: getValue(initQueue[i], 'placement'),
+    };
 
       setSongList((prevSongs) => [...prevSongs, songData]);
     }
