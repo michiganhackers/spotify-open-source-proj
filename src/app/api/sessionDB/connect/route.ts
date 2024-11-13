@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     }
     catch (e) {
         return NextResponse.json(
+            { message: "could not create user - username already in use"},
             { status: 500 }
         )
     }

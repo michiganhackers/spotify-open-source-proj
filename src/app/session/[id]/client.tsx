@@ -1,9 +1,22 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
-import { render } from 'react-dom'
+import ProgressBar from './progressbar'
+import { getValue } from '@/src/utils'
+import { getSocketInstance, removeSocketInstance } from '@/src/socket/socketmanager'
+import { v4 as uuidv4 } from "uuid";
+//import { render } from 'react-dom'
+
+const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
+  return (
+    <div className="toast">
+      {message}
+      <button onClick={onClose}>×</button>
+    </div>
+  );
+};
 
 export function Session({
     isHost, sid, username,
@@ -13,8 +26,8 @@ export function Session({
     hostName : string, clientNames : string[], queue : any[]
 }) {
 
-    const socket = socketIO(sid);
-    socket.connect(); // connect to ws
+  const socket = socketIO(sid);
+  socket.connect(); // connect to ws
 
     if(isHost === "true")
         return <SessionHost 
@@ -71,24 +84,28 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
 
-  /*useEffect(() => {
-    console.log(songList);
-    console.log("Updated songList");
-  }, [songList]) */
-  
-  // Initialize starting queue from connection
-  /*for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-    const songData = 
-        {  
-            songId: initQueue[i].song_id,
-            songName: initQueue[i].song_name,
-            albumCover: initQueue[i].album_cover,
-            artistName: initQueue[i].artist_name, 
-            placement: initQueue[i].placement,
-        }
-    setSongList((prevSongs) => [...prevSongs, songData]);
- }*/
+  useEffect(() => {
+
+    //songID vs song_id => when fetching straight from spotify its the former, from database its the latter
+    function getValue(data: any, key: string) {
+      return data[key] ?? data[key.replace(/([A-Z])/g, '_$1').toLowerCase()];
+    }
+
+    for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
+      const songData = {
+        songId: getValue(initQueue[i], 'songId'),
+        songName: getValue(initQueue[i], 'songName'),
+        albumCover: getValue(initQueue[i], 'albumCover'),
+        artistName: getValue(initQueue[i], 'artistName'),
+        placement: getValue(initQueue[i], 'placement'),
+    };
+
+      setSongList((prevSongs) => [...prevSongs, songData]);
+    }
+
+  }, [initQueue]);
 
   // Add song to end of the queue with all data needed for UI
   const addSongToQueue = (songInput: any) => {
@@ -113,6 +130,17 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
 
     console.log(updatedQueue);
     setSongList([...updatedQueue]);
+  });
+
+  socket.removeAllListeners("retrieveProgress");
+  socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number}) => {
+    //console.log("retrieved progress emission")
+    //console.log(data)
+    
+    //calc percentage of the bar can change later if need be ---------
+    const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+
+    setProgress(percentage)
   });
 
   // Handles song submission then clears input
@@ -185,7 +213,16 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   let timer : any;
   const waitTime = 500;
 
+  
+
   return (
+    <>
+    <div style={{ padding: '20px' }}>
+      <h2>Song Progress Bar</h2>
+      <ProgressBar progress={progress} />
+      <p>{progress}%</p>
+    </div>
+   
     <div id="QueueWrapper">
       <h1>Queue</h1>
       {songList.map((song) => (
@@ -228,6 +265,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
       </div>
       
     </div>
+    </>
   );
 }
 
