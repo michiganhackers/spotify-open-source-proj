@@ -17,6 +17,7 @@
     "postgres": "^3.4.3",
     "react": "^18",
     "react-dom": "^18",
+    "react-toastify": "^10.0.6",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "utf-8-validate": "^6.0.3",

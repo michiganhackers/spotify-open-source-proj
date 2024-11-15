@@ -5,17 +5,30 @@ import { redirect, useRouter } from 'next/navigation'
 import { Router } from 'next/router';
 import { handleSpotifyAuth } from '@/src/utils';
 import 'dotenv/config';
+const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
+  return (
+    <div className="toast">
+      {message}
+      <button onClick={onClose}>×</button>
+    </div>
+  );
+};
+ 
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
   const [username, setUsername] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
-
+  const [toastMessage, setToastMessage] = useState('');
   const router = useRouter();
   
   useEffect(() => {
     // This effect will run only on the client side
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(''), 3500);
+      return () => clearTimeout(timer);}
     // You can place any client-side specific logic here
-  }, []); // Empty dependency array ensures the effect runs only once on mount
+  }, [toastMessage]); // Empty dependency array ensures the effect runs only once on mount
+
   
   return (
     <main className="background flex min-h-screen flex-col items-center justify-between p-24">
@@ -50,18 +63,22 @@ export default function Home() {
             <button className="SubmitButton" onClick={() => {
                 sessionStorage.setItem("username", username);
                 sessionStorage.setItem("isHost", "false");
-                connectToSession(guestCode, username, router)}}>
+                   connectToSession(guestCode, username, router,setToastMessage)}}>
+
                     Join
             </button>
         </div>
       </div>
+      {toastMessage && (
+        <Toast message={toastMessage} onClose={() => setToastMessage('')} />
+      )}
     </main>
   );
 }
 
-async function connectToSession(guestCode : string, username : string, router : any) : Promise<void> { 
+async function connectToSession(guestCode : string, username : string, router : any, setToastMessage : any) : Promise<void> { 
     
-
+ let stat; 
   try {
     await fetch('api/sessionDB/connect', {
       method: 'POST',
@@ -73,18 +90,28 @@ async function connectToSession(guestCode : string, username : string, router : 
           username: username
       }),
     }).then((response) => {
-        if(!response.ok)
-            throw Error(response.statusText);
+      console.log(response)
+        if(!response.ok){
+          stat = response.status;
+            throw Error(response.statusText);}
 
         return response.json();
     }).then((data) => {
         const url = data.url;
+        console.log(typeof url)
         router.push(url);
     })
   }
   catch(e){
     // TODO: Add some error message to user saying that wrong code was entered
     console.error(e);
+   
+   if(stat == 401){
+    setToastMessage('Error: Guest code not found.');
+   }else if (stat == 409){
+    setToastMessage('Error: Username already in use.');
+   };
+  
   }
 }
 

@@ -26,8 +26,10 @@ export async function POST(req: Request) {
         await CreateUser(username, sid, false);
     }
     catch (e) {
+        console.log("Duplicate user")
         return NextResponse.json(
-            { status: 500 }
+            { message: "User already exists" },
+            { status: 409 }
         )
     }
     
