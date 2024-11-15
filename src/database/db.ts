@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 import 'dotenv/config'
-
+import { cloneElement } from 'react'
 
 // const sql = postgres(process.env.PG_URI!)
 const sql = postgres({
@@ -246,4 +246,78 @@ export async function DeleteSession(sid : string) : Promise<void> {
     if(results[0].length === 0) {
         throw new Error("sid does not exist")
     }
+}
+
+    
+export async function GetRefreshToken(sid : string) : Promise<any> {
+
+    /*
+    const tokens = await sql`
+    SELECT access_token, refresh_token FROM sessions
+    `
+
+    // Print both access_token and refresh_token
+    tokens.forEach(token => {
+        console.log('Access Token:', token.access_token);
+        console.log('Refresh Token:', token.refresh_token);
+    });*/
+
+    const token = await sql`
+        SELECT refresh_token FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    if(token.length < 1) {
+        throw Error("Undefined session id")
+    }
+
+    console.log("refreshtoken: ", token[0].refresh_token)
+
+    return token[0].refresh_token;
+}
+
+export async function UpdateTokens(
+    accessToken : string,
+    refreshToken : string,
+    sid : string) : Promise<any> {
+
+    // Get all currently used session codes
+    const codes : any[] = await sql`
+        SELECT session_id FROM sessions
+    `
+
+    let is_found = false;
+
+    for (let i = 0; i < codes.length; i++) {
+        if (sid === codes[i]['session_id']) {
+            is_found = true;
+            break;
+        }
+    }
+    
+    if (!is_found) {
+        throw new Error(`Session ID ${sid} not found.`);
+    }
+
+    const token = await sql`
+        SELECT access_token FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    console.log("old token: ", token[0].access_token)
+
+    await sql`
+    UPDATE sessions 
+    SET access_token = ${accessToken}, refresh_token = ${refreshToken}
+    WHERE session_id = ${sid}
+    `;
+
+    const newtoken = await sql`
+        SELECT access_token FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    console.log("new token: ", newtoken[0].access_token)
+
+    return sid;
 }
