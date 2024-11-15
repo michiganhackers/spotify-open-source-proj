@@ -9,15 +9,6 @@ import { getSocketInstance, removeSocketInstance } from '@/src/socket/socketmana
 import { v4 as uuidv4 } from "uuid";
 //import { render } from 'react-dom'
 
-const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
-  return (
-    <div className="toast">
-      {message}
-      <button onClick={onClose}>×</button>
-    </div>
-  );
-};
-
 export function Session({
     isHost, sid, username,
     hostName, clientNames, queue
@@ -26,8 +17,15 @@ export function Session({
     hostName : string, clientNames : string[], queue : any[]
 }) {
 
-  const socket = socketIO(sid);
-  socket.connect(); // connect to ws
+  const userSessionId = useRef(uuidv4()); // unique identifier per user session
+  console.log("session key: ", userSessionId)
+  const socket = getSocketInstance(sid, userSessionId.current);
+  useEffect(() => {
+    socket.connect();
+    return () => { // disconnect when component unmounts
+      removeSocketInstance(sid, userSessionId.current);
+    };
+  }, []);
 
     if(isHost === "true")
         return <SessionHost 
@@ -85,6 +83,8 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
   const [toastMessage, setToastMessage] = useState('');
+
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
 

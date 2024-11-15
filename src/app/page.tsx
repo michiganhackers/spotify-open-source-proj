@@ -17,41 +17,6 @@ export default function Home() {
     // You can place any client-side specific logic here
   }, []); // Empty dependency array ensures the effect runs only once on mount
 
-  const [session, setSession] = useState("");
-  const [formusername, setFormUsername] = useState("");
-  const [formpassword, setFormPassword] = useState("");
-
-  const handleSessionClick = (sid: any) => {
-    setSession(sid);
-    setFormUsername("");
-    setFormPassword("");
-  };
-
-  const handleFormSubmit = (e: any) => {
-    e.preventDefault();
-    if(session !== formpassword){
-      console.log("not the right password")
-      setSession("");
-      return
-    }
-    sessionStorage.setItem("username", formusername);
-    //always set this to false because the form only applies to joining an existing session
-    sessionStorage.setItem("isHost", "false");
-    connectToSession(session, formusername, router);
-
-    setSession("");
-  };
-
-  const [hoverSessionId, setHoverSessionId] = useState("");
-
-  const handleMouseEnter = (event : any, sid : string) => {
-    setHoverSessionId(sid); // displays the popup for that sid
-  };
-
-  const handleMouseLeave = () => {
-    setHoverSessionId("");
-  };
-
   return (
     <main className="background flex min-h-screen flex-col items-center justify-between p-24">
       <img src="GMJ-emblem-color.svg" alt="" />
