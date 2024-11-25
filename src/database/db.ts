@@ -2,7 +2,13 @@ import postgres from 'postgres'
 import 'dotenv/config'
 
 
-const sql = postgres(process.env.PG_URI!)
+// const sql = postgres(process.env.PG_URI!)
+const sql = postgres('postgres://username:password@host:port/database', {
+    host                 : '',            // Postgres ip address[s] or domain name[s]
+    port                 : 5432,          // Postgres server port[s]
+    username             : process.env.PG_USER,            // Username of database user
+    password             : process.env.PG_PASSWORD          // Password of database user
+  })
 
 
 /*
