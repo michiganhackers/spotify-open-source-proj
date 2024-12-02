@@ -1,14 +1,6 @@
 import { Server } from "socket.io";
-import { GetAccessToken, GetQueue, GetSessionData, ReplaceQueue } from "../database/db"
-import { handleSpotifyAuth } from "@/src/utils";
+import { GetAccessToken, GetQueue, ReplaceQueue } from "../database/db"
 import 'dotenv/config'
-import { log } from "console";
-import { deprecate } from "util";
-
-/* const client_id : string | undefined = process.env.SPOTIFY_WSS_CLIENT_ID;
-const redirect_uri : string | undefined = process.env.WS_SERVER;
-const scope : string = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
-handleSpotifyAuth(client_id, redirect_uri, scope); */
 
 const io = new Server({ 
     cors: {
@@ -16,29 +8,95 @@ const io = new Server({
     }
 });
 
+// Goals for this class:
+//      - Create an instance of WebSocketController at top level of server.ts
+//      - As users connect and disconnect, track the number of users for a given session
+//      - When a new sid is identified, call addSessionInterval to create a new "thread" that will check for queue disparities every X seconds
+//      - If after a user leaves, the number of users for a given session == 0, set a timeout that will check in Y seconds if the number of users still == 0, 
+//        if so, call destroySession(sid)
+class WebSocketController {
+    private io : any;
+    private checkQueueUpdatesIntervals : Map<string, any>; // checkQueueUpdates intervalID for each sid
+    private userCounts : Map<string, number>; // # of users per sid
+
+    
+    constructor(io : any) {
+        this.io = io;
+        this.checkQueueUpdatesIntervals = new Map<string, any>();
+        this.userCounts = new Map<string, number>();
+    }
+
+
+    // Adds new {sid, intervalID} to checkQueueUpdatesIntervals
+    public addSessionInterval(sid : string) : void {
+        // Calls checkQueueUpdates every 5 seconds
+        let intervalID = setInterval(async () => {
+            try {
+                await checkQueueUpdates(sid, io);
+            }
+            catch (error : any) {
+                console.error(error);
+            }
+        }, 5000)
+        checkQueueUpdatesIntervals.set(sid, intervalID); // Add unique intervalID to 
+    }
+    
+
+    // Called when socket disconnects
+    public decrementUserCount(sid : string) : void {
+        var userCount : number = this.userCounts.get(sid) || 0;
+        let newUserCount : number = userCount - 1;
+        if(userCount !== 0)
+            this.userCounts.set(sid, newUserCount);
+
+        if(userCount === 0) {
+            // Wait X minutes to ensure that nobody is coming back to the session 
+            // This is for the case where the host leaves the app and never manually shuts down the session
+            // Not a guaranteed solution, just a heuristic so that we can estimate when nobody is using the app anymore
+            setTimeout(() => {
+                if(userCount === 0) {
+                    this.destroySession(sid);
+                }
+            }, 10000)
+        }
+    }
+
+
+    // Call when userCounts[sid] == 0 after some timeout period
+    // Deletes memory inside of WebSocketController related to session with sid
+    private destroySession(sid : string) : void {
+        this.checkQueueUpdatesIntervals.delete(sid);
+        // Remove database data here
+    }
+};
+
+let checkQueueUpdatesIntervals = new Map<string, any>();
 var checkQueueUpdatesInterval : any;
 io.on("connection", (socket) => {
 
     const sid : string = socket.handshake.auth.token;  
-    
+    console.log("Connection at " + socket.id);
     // Add user to the room (session) in which they want to connect
     socket.join(sid);
 
     // IDEA: Don't emit addSongToUI inside of sendSongToSocket
     //       Instead, have one function running a constant check for updates to the queue 
     /* TODO: IF HOST */
-    if(checkQueueUpdatesInterval)
-        clearInterval(checkQueueUpdatesInterval);
+    if(checkQueueUpdatesIntervals.has(sid))
+        clearInterval(checkQueueUpdatesIntervals.get(sid));
 
-    checkQueueUpdatesInterval = setInterval(async () => {
+    checkQueueUpdatesIntervals.set(sid, setInterval(async () => {
         try {
             await checkQueueUpdates(sid, io);
         }
         catch (error : any) {
             console.error(error);
         }
-    }, 5000);
+    }, 5000));
     
+    /*
+    ** DEPRECATED **
+
     var counter = 0;
     socket.on("sendSongToSocket", (songData) => {
         console.log(counter)
@@ -52,11 +110,11 @@ io.on("connection", (socket) => {
 
     socket.on("sendSongsToSearch", (songData) => {
         socket.broadcast.to(songData.sid).emit("addSongToUI", songData)
-    })
+    }) */
 
     socket.on("disconnect", () => {
-        console.log("Disconnecting from socket for " + sid);
-        clearInterval(checkQueueUpdatesInterval);
+        console.log("Disconnecting socket id: " + socket.id);
+        clearInterval(checkQueueUpdatesIntervals.get(sid));
     })
 });
 

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { Socket } from 'socket.io-client';
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
@@ -24,6 +25,7 @@ export function Session({
 
     const socket = socketIO(sid);
     socket.connect(); // connect to ws
+    console.log("Creating new socket...");
 
     if(isHost === "true")
         return <SessionHost 
@@ -100,60 +102,63 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
     setSongList((prevSongs) => [...prevSongs, songData]);
  }*/
 
-  // Add song to end of the queue with all data needed for UI
-  const addSongToQueue = (songInput: any) => {
-    setSongList((prevSongs) => [...prevSongs, songInput]);
-  };
+    // Add song to end of the queue with all data needed for UI
+    const addSongToQueue = (songInput: any) => {
+        setSongList((prevSongs) => [...prevSongs, songInput]);
+    };
 
-  function addSongListener(songData : any) {
-    addSongToQueue(songData); 
-  }
+    function addSongListener(songData : any) {
+        addSongToQueue(songData); 
+    }
 
-  socket.removeAllListeners("UpdateQueueUI");
-  socket.on("UpdateQueueUI", (queue : any[]) => {
-    console.log("Received UpdateQueueUI emission")
-    console.log(queue)
-      
-   const updatedQueue = queue.map((song) => ({
-        songId: song.songId,
-        songName: song.songName,
-        albumCover: song.albumCover,
-        artistName: song.artistName
-    }))
+    if(socket !== null) {
+        socket.removeAllListeners("UpdateQueueUI");
+        socket.on("UpdateQueueUI", (queue : any[]) => {
+        console.log("Received UpdateQueueUI emission")
+        console.log(queue)
+        
+        const updatedQueue = queue.map((song) => ({
+            songId: song.songId,
+            songName: song.songName,
+            albumCover: song.albumCover,
+            artistName: song.artistName
+        }))
 
-    console.log(updatedQueue);
-    setSongList([...updatedQueue]);
-  });
+        console.log(updatedQueue);
+        setSongList([...updatedQueue]);
+    });
+}
 
-  // Handles song submission then clears input
-  const handleAddSong = (songId : string) => {
+    // Handles song submission then clears input
+    const handleAddSong = (songId : string) => {
    
-    fetch('http://localhost:3000/api/spotify/addSong', { // Adds song to the database
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            songId: songId,
-            sid: sid,
-            qlen: songList.length
-        })
-    }).then((response) => {
-        if (!response.ok) throw Error(response.statusText);
-        return response.json();
-    }).then((data) => {
-        const songData = 
-        {  
-            songId: songId,
-            songName: data.responseBody.songName,
-            albumCover: data.responseBody.albumCover,
-            artistName: data.responseBody.artistName, 
-            placement: data.responseBody.placement,
-        };
-      setToastMessage(` Successfully added: ${data.responseBody.songName}`);
-      setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
-    }).catch((error) => console.log(error))
-  };
+        fetch('http://localhost:3000/api/spotify/addSong', { // Adds song to the database
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                songId: songId,
+                sid: sid,
+                qlen: songList.length
+            })
+        }).then((response) => {
+            if (!response.ok) throw Error(response.statusText);
+            return response.json();
+        }).then((data) => {
+            const songData = 
+            {  
+                songId: songId,
+                songName: data.responseBody.songName,
+                albumCover: data.responseBody.albumCover,
+                artistName: data.responseBody.artistName, 
+                placement: data.responseBody.placement,
+            };
+        // TODO: Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
+        setToastMessage(` Successfully added: ${data.responseBody.songName}`);
+        setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
+        }).catch((error) => console.log(error))
+    };
 
   // Can be used to have song "suggestions" for similar song names later
   const searchSongs = (input: string) => {
