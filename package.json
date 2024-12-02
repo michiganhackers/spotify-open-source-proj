@@ -20,6 +20,7 @@
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "utf-8-validate": "^6.0.3",
+    "uuid": "^11.0.3",
     "ws": "^8.16.0"
   },
   "devDependencies": {

@@ -1,10 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Socket } from 'socket.io-client';
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
 import { render } from 'react-dom'
+import { getSocketInstance, removeSocketInstance } from '@/src/socket/SocketManager'
+import { v4 as uuidv4 } from "uuid";
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
   return (
@@ -19,15 +21,20 @@ export function Session({
     isHost, sid, username,
     hostName, clientNames, queue
 } : {
-    isHost : string, sid : string, username : string,
+    isHost : boolean, sid : string, username : string,
     hostName : string, clientNames : string[], queue : any[]
 }) {
+    
+    const userSessionId = useRef(uuidv4()); // unique identifier per user session
+    const socket = getSocketInstance(sid, userSessionId.current, isHost);
+    useEffect(() => {
+        socket.connect();
+        return () => { // disconnect when component unmounts
+            removeSocketInstance(sid, userSessionId.current);
+        };
+    }, []);
 
-    const socket = socketIO(sid);
-    socket.connect(); // connect to ws
-    console.log("Creating new socket...");
-
-    if(isHost === "true")
+    if(isHost)
         return <SessionHost 
             hostName={hostName}
             clientNames={clientNames}
@@ -111,23 +118,20 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
         addSongToQueue(songData); 
     }
 
-    if(socket !== null) {
-        socket.removeAllListeners("UpdateQueueUI");
-        socket.on("UpdateQueueUI", (queue : any[]) => {
-        console.log("Received UpdateQueueUI emission")
-        console.log(queue)
-        
-        const updatedQueue = queue.map((song) => ({
-            songId: song.songId,
-            songName: song.songName,
-            albumCover: song.albumCover,
-            artistName: song.artistName
-        }))
+  socket.removeAllListeners("UpdateQueueUI");
+  socket.on("UpdateQueueUI", (queue : any[]) => {
+    console.log("Received UpdateQueueUI emission")
+      
+   const updatedQueue = queue.map((song, index) => ({
+        songId: song.songId,
+        songName: song.songName,
+        albumCover: song.albumCover,
+        artistName: song.artistName,
+        placement: index
+    }))
 
-        console.log(updatedQueue);
-        setSongList([...updatedQueue]);
-    });
-}
+    setSongList([...updatedQueue]);
+  });
 
     // Handles song submission then clears input
     const handleAddSong = (songId : string) => {
@@ -205,7 +209,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
     <div id="QueueWrapper">
       <h1>Queue</h1>
       {songList.map((song) => (
-        <div key={song.songId}>
+        <div key={`${song.songId}${song.placement}`}>
           <Song 
             id={song.songId}
             name={song.songName}

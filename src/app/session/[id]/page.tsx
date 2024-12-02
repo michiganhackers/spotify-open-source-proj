@@ -67,42 +67,41 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     }, []);
 
     
-    /*useEffect(() => {
-        if(isHostNameSet) {
-            console.log("mounting...")
-
-            fetch('http://localhost:3000/api/sessionDB/initSession', {
+    useEffect(() => {
+        const initSession = () => {
+          fetch('http://localhost:3000/api/sessionDB/initSession', {
             method: 'POST',
             headers: {
-            'Content-Type': 'application/json',
+              'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-            sid: sid,
-            }),
-            }).then((response) => {
-                if(!response.ok)
-                    return new Error(response.statusText);
-
-                return response.json();
-            }).then((sessionData) => {
-                console.log(sessionData.hostName)
-                console.log(sessionData.clientNames)
-                console.log(sessionData.queue)
-                setHostName(sessionData.hostName);
-                setClientNames(sessionData.clientNames);
-                setQueue(sessionData.queue);
+            body: JSON.stringify({ sid }),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(response.statusText);
+              }
+              return response.json();
             })
-            .catch((error) => console.log(error))
-        }
-        
+            .then((data) => {
+              console.log("data: ",data)
+              setClientNames(data.clientNames)
+              setQueue(data.queue);
+            })
+            .catch((error) => {
+              console.error("error:", error);
+            });
+          }
 
-        return () => console.log("unmounting...")
-    }, [isHostNameSet]); */
+          //check if hostname is set before mounting
+          if(isHostNameSet){
+            initSession()
+          }
+    }, [isHostNameSet]); //if it mounts on start, this useEffect runs before the username + hostID is set in the database
     
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
             <Session
-                isHost={isHost}
+                isHost={(sessionStorage.getItem('isHost') === "true") ? true : false}
                 sid={sid}
                 username={username}
                 hostName={hostName}
