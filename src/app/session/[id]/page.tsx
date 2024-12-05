@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation'
 import { Session } from './client'
 import 'dotenv/config'
 
@@ -14,6 +15,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     const [isHostNameSet, setIsHostNameSet] = useState(false);
     
     let sid : string = params.id;
+    const router = useRouter();
 
     useEffect(() => {
         // Add host's name to DB now that session has been created
@@ -107,6 +109,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
                 hostName={hostName}
                 clientNames={clientNames}
                 queue={queue}
+                router={router}
             >      
             </Session>
         </main>  

@@ -28,11 +28,22 @@ io.on("connection", (socket) => {
     else
         controller.incrementUserCount(sid);
 
-    // Add event listeners for the following events:
-    //  1. User adds song to queue => we should automatically call checkQueueUpdates in our controller
-    //  2. Host presses end session button => we should call controller.deleteSession()
-    //  3. 
 
+    /* ----- EVENT LISTENERS ----- */
+
+    //  User adds song to queue => we should automatically call checkQueueUpdates in our controller
+    socket.on("AddedSong", async () => {
+        console.log("received added song emission")
+        await controller.checkQueue(sid);
+    });
+    
+    //  Host presses end session button => we should call controller.deleteSession()
+    socket.on("EndSession", async () => {
+        console.log("received end session emission")
+        await controller.endSession(sid);
+    });
+
+    // User disconnects from session
     socket.on("disconnect", () => {
         console.log("Disconnecting socket id: " + socket.id);
         controller.decrementUserCount(sid); // Remove user from session in controller

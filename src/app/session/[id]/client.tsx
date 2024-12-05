@@ -19,20 +19,15 @@ const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, o
 
 export function Session({
     isHost, sid, username,
-    hostName, clientNames, queue
+    hostName, clientNames, queue, router
 } : {
     isHost : boolean, sid : string, username : string,
-    hostName : string, clientNames : string[], queue : any[]
+    hostName : string, clientNames : string[], queue : any[], router : any
 }) {
     
+    // Create a non-changing socket
     const userSessionId = useRef(uuidv4()); // unique identifier per user session
-    const socket = getSocketInstance(sid, userSessionId.current, isHost);
-    useEffect(() => {
-        socket.connect();
-        return () => { // disconnect when component unmounts
-            removeSocketInstance(sid, userSessionId.current);
-        };
-    }, []);
+    const socket = getSocketInstance(sid, userSessionId.current, isHost).connect();
 
     if(isHost)
         return <SessionHost 
@@ -42,6 +37,7 @@ export function Session({
             username={username}
             socket={socket}
             sid={sid} 
+            router={router}
         />;
     else
         return <SessionGuest 
@@ -51,6 +47,7 @@ export function Session({
             username={username}
             socket={socket}
             sid={sid}
+            router={router}
         />;
 }
 
@@ -91,23 +88,7 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songQuery, setSongQuery] = useState<any[]>([]);
   const [toastMessage, setToastMessage] = useState('');
 
-  /*useEffect(() => {
-    console.log(songList);
-    console.log("Updated songList");
-  }, [songList]) */
-  
-  // Initialize starting queue from connection
-  /*for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-    const songData = 
-        {  
-            songId: initQueue[i].song_id,
-            songName: initQueue[i].song_name,
-            albumCover: initQueue[i].album_cover,
-            artistName: initQueue[i].artist_name, 
-            placement: initQueue[i].placement,
-        }
-    setSongList((prevSongs) => [...prevSongs, songData]);
- }*/
+  //console.log(socket.connected)
 
     // Add song to end of the queue with all data needed for UI
     const addSongToQueue = (songInput: any) => {
@@ -118,25 +99,26 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
         addSongToQueue(songData); 
     }
 
-  socket.removeAllListeners("UpdateQueueUI");
-  socket.on("UpdateQueueUI", (queue : any[]) => {
-    console.log("Received UpdateQueueUI emission")
-      
-   const updatedQueue = queue.map((song, index) => ({
-        songId: song.songId,
-        songName: song.songName,
-        albumCover: song.albumCover,
-        artistName: song.artistName,
-        placement: index
-    }))
+    socket.removeAllListeners("UpdateQueueUI");
+    socket.on("UpdateQueueUI", (queue : any[]) => {
+        console.log("Received UpdateQueueUI emission")
+        console.log(socket)
+        
+    const updatedQueue = queue.map((song, index) => ({
+            songId: song.songId,
+            songName: song.songName,
+            albumCover: song.albumCover,
+            artistName: song.artistName,
+            placement: index
+        }))
 
-    setSongList([...updatedQueue]);
-  });
+        setSongList([...updatedQueue]);
+    });
 
     // Handles song submission then clears input
     const handleAddSong = (songId : string) => {
    
-        fetch('http://localhost:3000/api/spotify/addSong', { // Adds song to the database
+        fetch('http://localhost:3000/api/spotify/addSong', { // Adds song to the spotify queue
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -158,9 +140,16 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
                 artistName: data.responseBody.artistName, 
                 placement: data.responseBody.placement,
             };
-        // TODO: Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
-        setToastMessage(` Successfully added: ${data.responseBody.songName}`);
-        setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
+            // Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
+            console.log(socket)
+            try {
+                socket.emit('AddedSong');
+            }
+            catch (error) {
+                console.error(error)
+            }
+            setToastMessage(` Successfully added: ${data.responseBody.songName}`);
+            setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
         }).catch((error) => console.log(error))
     };
 
@@ -206,59 +195,84 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const waitTime = 500;
 
   return (
-    <div id="QueueWrapper">
-      <h1>Queue</h1>
-      {songList.map((song) => (
-        <div key={`${song.songId}${song.placement}`}>
-          <Song 
-            id={song.songId}
-            name={song.songName}
-            addedBy={song.user}
-            coverArtURL={song.albumCover}
-            artistName={song.artistName}
-          />
+    <>
+        <div id="QueueWrapper" style={{ maxHeight: '800px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+            <h1>Queue</h1>
+            {songList.map((song) => (
+                <div key={`${song.songId}${song.placement}`}>
+                <Song 
+                    id={song.songId}
+                    name={song.songName}
+                    addedBy={song.user}
+                    coverArtURL={song.albumCover}
+                    artistName={song.artistName}
+                />
 
+                </div>
+            ))}
+        
         </div>
-      ))}
-      <div id="AddSong">
-        <input
-          type="text"
-          placeholder='Track Name'
-          onKeyUp={(e : any) => {
-            clearTimeout(timer);
+        
+        <div id="QuerySongWrapper">
+            <div id="AddSong">
+                <input
+                type="text"
+                placeholder='Track Name'
+                onKeyUp={(e : any) => {
+                    clearTimeout(timer);
 
-            timer = setTimeout(() => {
-                searchSongs(e.target.value)
-            }, waitTime);
-          }
-        }
-        />
-        <div id="dropdown" style={{ maxHeight: '600px', 
-          overflowY: 'scroll', 
-          overflowX: 'hidden',
-          scrollbarWidth: 'none', 
-          }}
-          >
-          {songQuery.map((song, index) => (
-          <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
-            <Song 
-              id={song.songId}
-              name={song.songName}
-              coverArtURL={song.albumCover}
-              artistName={song.artistName}
-            />
-          </button>
-        ))}
+                    timer = setTimeout(() => {
+                        searchSongs(e.target.value)
+                    }, waitTime);
+                }
+                }
+                />
+            </div>
+
+            <div id="dropdown" style={{ maxHeight: '600px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+                {songQuery.map((song, index) => (
+                <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
+                    <Song 
+                    id={song.songId}
+                    name={song.songName}
+                    coverArtURL={song.albumCover}
+                    artistName={song.artistName}
+                    />
+                </button>
+                ))}
+            </div>
         </div>
-      </div>
-      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-    </div>
-  );
-}
+        {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
+    );
+  </>
+)}
 
 
 // SessionGuest component is now the source of truth for the queue of songs
-export function SessionGuest( {hostName, clientNames, queue, username, socket, sid } : any ) {
+function SessionGuest( {hostName, clientNames, queue, username, socket, sid, router } : any ) {
+
+    const [isOverlayVisible, setOverlayVisible] = useState(false);
+
+    const handleExit = () => {        
+        // Send disconnect event to WSS
+        socket.disconnect();
+        // Re-route to the home page (from inside the newly created overlay component)
+        router.push('/');
+    };
+
+
+    socket.on("SessionEnded", () => {
+        setOverlayVisible(true); // Show overlay
+    })
+
   return (
     <>
       <div id="session-header">
@@ -267,7 +281,7 @@ export function SessionGuest( {hostName, clientNames, queue, username, socket, s
           <h1 className="session-header-host">{hostName}'s Session</h1>
           <h1 className="session-header-guest-code">{sid}</h1>
         </div>
-        <button className="end-session-button">Exit</button>
+        <button className="end-session-button" onClick={handleExit}>Exit</button>
       </div>
       <div id="session-body">
         <Queue
@@ -284,13 +298,27 @@ export function SessionGuest( {hostName, clientNames, queue, username, socket, s
 
 
 // TODO: Add host components where necessary
-export function SessionHost({hostName, clientNames, queue, username, socket, sid } : any) {
+function SessionHost({hostName, clientNames, queue, username, socket, sid, router } : any) {
+
+    // Once socket sends back "SessionEnded" event, route back to home page
+    socket.on("SessionEnded", () => {router.push('/')})
+
+    const handleEndSession = () => {
+        // Send socket event to server to shut down session
+        try {
+            socket.emit("EndSession");
+        }
+        catch (error) {
+            console.error("Failed to emit EndSession:", error);
+        }
+    }
+
     return (
         <>
         <div id="session-header">
           <h1 className="user-name">{username}</h1>
           <h1 className="guest-code">{sid}</h1>         
-          <button className="end-session-button">End Session</button>
+          <button className="end-session-button" onClick={handleEndSession}>End Session</button>
         </div>
         <div id="session-body">
           <Queue

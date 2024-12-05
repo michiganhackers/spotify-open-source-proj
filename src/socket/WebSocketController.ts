@@ -11,6 +11,8 @@ export class WebSocketController {
     private checkQueueUpdatesIntervals : Map<string, any>; // checkQueueUpdates intervalID for each sid
     private userCounts : Map<string, number>; // # of users per sid
 
+
+    /* ----- Public member functions ----- */
     
     constructor(io : any) {
         this.io = io;
@@ -21,6 +23,11 @@ export class WebSocketController {
 
     // Adds new {sid, intervalID} to checkQueueUpdatesIntervals
     public addSessionInterval(sid : string) : void {
+        // Check if session already exists, if it does, simply increment user cound
+        if(this.checkQueueUpdatesIntervals.has(sid)) {
+            this.incrementUserCount(sid);
+            return;
+        }
         // Calls checkQueueUpdates every 5 seconds
         let intervalID = setInterval(async () => {
             try {
@@ -67,15 +74,39 @@ export class WebSocketController {
     }
 
 
+    // Called whenever the server receives an 'EndSession' event emission
+    public async endSession(sid : string) : Promise<void> {
+        await this.destroySession(sid);
+
+        // Broadcast to all users in session that it has ended
+        this.io.to(sid).emit("SessionEnded"); // Send updated queue to all users in session
+    }
+
+
+    // Called whenever the server receives an 'AddedSong' event emission
+    public async checkQueue(sid : string) : Promise<void> {
+        await this.checkQueueUpdates(sid, this.io);
+    }
+
+    
+    /* ----- Private member functions ----- */
+
+
     // Call when userCounts[sid] == 0 after some timeout period
     // Deletes memory inside of WebSocketController related to session with sid
-    private destroySession(sid : string) : void {
+    private async destroySession(sid : string) : Promise<void> {
         // Clear interval and remove from map
         clearInterval(this.checkQueueUpdatesIntervals.get(sid));
         this.checkQueueUpdatesIntervals.delete(sid);
         
         // Remove session data from the database
-        DeleteSession(sid);
+        try {
+            await DeleteSession(sid);
+        }
+        catch(e) {
+            console.log(e);
+        }
+        
     }
 
 
