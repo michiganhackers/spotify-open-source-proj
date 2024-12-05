@@ -39,6 +39,7 @@ export class WebSocketController {
         var userCount : number = this.userCounts.get(sid) || 0;
         let newUserCount : number = userCount + 1;
         this.userCounts.set(sid, newUserCount);
+        console.log("Session " + sid + " now has " + this.userCounts.get(sid) + " users!")
     }
     
 
@@ -46,15 +47,19 @@ export class WebSocketController {
     public decrementUserCount(sid : string) : void {
         var userCount : number = this.userCounts.get(sid) || 0;
         let newUserCount : number = userCount - 1;
-        if(userCount !== 0)
+        if(userCount !== 0) {
             this.userCounts.set(sid, newUserCount);
+            console.log("Session " + sid + " now has " + this.userCounts.get(sid) + " users!")
+        }
 
-        if(userCount === 0) {
+        if(this.userCounts.get(sid) === 0) {
+            console.log("Starting 10 second timeout...");
             // Wait X minutes to ensure that nobody is coming back to the session 
             // This is for the case where the host leaves the app and never manually shuts down the session
             // Not a guaranteed solution, just a heuristic so that we can estimate when nobody is using the app anymore
             setTimeout(() => {
                 if(this.userCounts.get(sid) === 0) {
+                    console.log("Terminating session interval and database information");
                     this.destroySession(sid);
                 }
             }, 10000)
@@ -65,6 +70,8 @@ export class WebSocketController {
     // Call when userCounts[sid] == 0 after some timeout period
     // Deletes memory inside of WebSocketController related to session with sid
     private destroySession(sid : string) : void {
+        // Clear interval and remove from map
+        clearInterval(this.checkQueueUpdatesIntervals.get(sid));
         this.checkQueueUpdatesIntervals.delete(sid);
         
         // Remove session data from the database
