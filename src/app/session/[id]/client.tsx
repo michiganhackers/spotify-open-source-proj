@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
-import ProgressBar from './progressbar'
+import {millisecondsToString, ProgressBar} from './progressbar'
 import { getValue } from '@/src/utils'
 import { getSocketInstance, removeSocketInstance } from '@/src/socket/socketmanager'
 import { v4 as uuidv4 } from "uuid";
@@ -85,6 +85,8 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [toastMessage, setToastMessage] = useState('');
 
   const [progress, setProgress] = useState(0);
+  const [songlength, setSongLength] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
 
@@ -133,15 +135,42 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   });
 
   socket.removeAllListeners("retrieveProgress");
-  socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number}) => {
+  socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number, id : string}) => {
     //console.log("retrieved progress emission")
     //console.log(data)
     
     //calc percentage of the bar can change later if need be ---------
-    const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+    //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+    console.log("seek, skip, or drift happened updating...");
 
-    setProgress(percentage)
+    setIsPlaying(data.is_playing);
+    setProgress(data.progress_ms)
+    setSongLength(data.duration_ms);
   });
+
+  useEffect(() => {
+    let intervalId : any;
+
+    if (isPlaying) {
+      intervalId = setInterval(() => {
+        setProgress((prev) => {
+          const newProgress = prev + 1000;
+
+          if (newProgress >= songlength) {
+            clearInterval(intervalId);
+            return songlength;
+          }
+
+          return newProgress;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isPlaying, songlength]);
+
 
   // Handles song submission then clears input
   const handleAddSong = (songId : string) => {
@@ -217,11 +246,15 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
 
   return (
     <>
-    <div style={{ padding: '20px' }}>
-      <h2>Song Progress Bar</h2>
-      <ProgressBar progress={progress} />
-      <p>{progress}%</p>
-    </div>
+      <div style={{ padding: '20px' }}>
+        <h2>Song Progress Bar</h2>
+        <ProgressBar progress={progress} songlength={songlength} />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <p>{millisecondsToString(progress)}</p>
+          <p>{millisecondsToString(songlength)}</p>
+        </div>
+        <p>Status: {isPlaying ? 'Playing' : 'Paused'}</p>
+      </div>
    
     <div id="QueueWrapper">
       <h1>Queue</h1>
