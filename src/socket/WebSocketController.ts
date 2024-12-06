@@ -33,10 +33,23 @@ export class WebSocketController {
             this.incrementUserCount(sid);
             return;
         }
+
+        this.currentSongProgress.set(sid, { progress: 0, lastUpdated: 0, isPlaying: false, duration: 0 });
+
         // Calls checkQueueUpdates every 5 seconds
         let intervalID = setInterval(async () => {
+            const existing = this.currentSongProgress.get(sid);
+            this.currentSongProgress.set(sid, {
+                ...existing, 
+                progress: existing!.progress + 5000,
+                lastUpdated: existing!.lastUpdated, // Provide a default value
+                isPlaying: existing!.isPlaying,     // Provide a default value
+                duration: existing!.duration        // Provide a default value
+            })
+
             try {
                 await this.checkQueueUpdates(sid, this.io);
+                await this.syncSongProgress(sid, this.io);
             }
             catch (error : any) {
                 console.error(error);
@@ -44,8 +57,6 @@ export class WebSocketController {
         }, 5000)
         this.checkQueueUpdatesIntervals.set(sid, intervalID); // Add unique intervalID to 
         this.userCounts.set(sid, 1); // Initialize user count for session
-
-        this.currentSongProgress.set(sid, { progress: 0, lastUpdated: 0, isPlaying: false, duration: 0 });
     }
 
 
@@ -76,7 +87,7 @@ export class WebSocketController {
                     console.log("Terminating session interval and database information");
                     this.destroySession(sid);
                 }
-            }, 10000)
+            }, 600000)
         }
     }
 

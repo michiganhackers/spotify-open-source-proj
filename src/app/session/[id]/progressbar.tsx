@@ -23,13 +23,13 @@ const styles = {
   progressBarContainer: {
     width: '100%',
     height: '20px',
-    backgroundColor: '#e0e0de',
+    backgroundColor: 'rgb(166, 238, 166)',
     borderRadius: '10px',
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3b82f6',
+    backgroundColor: 'green',
     transition: 'width 0.2s ease-in-out',
   },
 };

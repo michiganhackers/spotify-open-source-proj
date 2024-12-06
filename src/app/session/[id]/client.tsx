@@ -1,9 +1,22 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Socket } from 'socket.io-client';
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
 import { render } from 'react-dom'
+import { getSocketInstance, removeSocketInstance } from '@/src/socket/SocketManager'
+import { v4 as uuidv4 } from "uuid";
+import { ProgressBar, millisecondsToString } from './progressbar';
+
+const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
+  return (
+    <div className="toast">
+      {message}
+      <button onClick={onClose}>×</button>
+    </div>
+  );
+};
 
 export function Session({
     isHost, sid, username,
@@ -12,9 +25,10 @@ export function Session({
     isHost : boolean, sid : string, username : string,
     hostName : string, clientNames : string[], queue : any[], router : any
 }) {
-
-    const socket = socketIO(sid);
-    socket.connect(); // connect to ws
+    
+    // Create a non-changing socket
+    const userSessionId = useRef(uuidv4()); // unique identifier per user session
+    const socket = getSocketInstance(sid, userSessionId.current, isHost).connect();
 
     if(isHost)
         return <SessionHost 
@@ -73,24 +87,13 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
 
-  /*useEffect(() => {
-    console.log(songList);
-    console.log("Updated songList");
-  }, [songList]) */
-  
-  // Initialize starting queue from connection
-  /*for(let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
-    const songData = 
-        {  
-            songId: initQueue[i].song_id,
-            songName: initQueue[i].song_name,
-            albumCover: initQueue[i].album_cover,
-            artistName: initQueue[i].artist_name, 
-            placement: initQueue[i].placement,
-        }
-    setSongList((prevSongs) => [...prevSongs, songData]);
- }*/
+  const [progress, setProgress] = useState(0);
+  const [songlength, setSongLength] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  //console.log(socket.connected)
 
     // Add song to end of the queue with all data needed for UI
     const addSongToQueue = (songInput: any) => {
@@ -114,9 +117,45 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
             placement: index
         }))
 
-    console.log(updatedQueue);
-    setSongList([...updatedQueue]);
+        setSongList([...updatedQueue]);
+    });
+
+    socket.removeAllListeners("retrieveProgress");
+  socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number, id : string}) => {
+    //console.log("retrieved progress emission")
+    //console.log(data)
+    
+    //calc percentage of the bar can change later if need be ---------
+    //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+    console.log("seek, skip, or drift happened updating...");
+
+    setIsPlaying(data.is_playing);
+    setProgress(data.progress_ms)
+    setSongLength(data.duration_ms);
   });
+
+    useEffect(() => {
+        let intervalId : any;
+
+        if (isPlaying) {
+        intervalId = setInterval(() => {
+            setProgress((prev) => {
+            const newProgress = prev + 1000;
+
+            if (newProgress >= songlength) {
+                clearInterval(intervalId);
+                return songlength;
+            }
+
+            return newProgress;
+            });
+        }, 1000);
+        }
+
+        return () => {
+        clearInterval(intervalId);
+        };
+    }, [isPlaying, songlength]);
 
     // Handles song submission then clears input
     const handleAddSong = (songId : string) => {
@@ -197,27 +236,47 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   let timer : any;
   const waitTime = 500;
 
-  
-
   return (
-    <div id="QueueWrapper">
-      <h1>Queue</h1>
-      {songList.map((song) => (
-        <div key={song.songId}>
-          <Song 
-            id={song.songId}
-            name={song.songName}
-            addedBy={song.user}
-            coverArtURL={song.albumCover}
-            artistName={song.artistName}
-          />
+    <>
 
+        <div style={{ padding: '20px', color: 'rgb(166, 238, 166)' }}>
+                <h2>Song Progress Bar</h2>
+                <ProgressBar progress={progress} songlength={songlength} />
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <p>{millisecondsToString(progress)}</p>
+                <p>{millisecondsToString(songlength)}</p>
                 </div>
-            ))}
+                <p>Status: {isPlaying ? 'Playing' : 'Paused'}</p>
+            </div>
+         
+        <div id="QueueWrapper" style={{ maxHeight: '500px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+            <h1>Queue</h1>
+            <div id="SongList">
+                {songList.map((song) => (
+                    <div key={`${song.songId}${song.placement}`}>
+                    <Song 
+                        id={song.songId}
+                        name={song.songName}
+                        addedBy={song.user}
+                        coverArtURL={song.albumCover}
+                        artistName={song.artistName}
+                    />
+
+                    </div>
+                ))}
+            </div>
         
         </div>
         
-        <div id="QuerySongWrapper">
+        <div id="QuerySongWrapper" style={{ maxHeight: '500px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
             <div id="AddSong">
                 <input
                 type="text"
@@ -225,29 +284,35 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
                 onKeyUp={(e : any) => {
                     clearTimeout(timer);
 
-            timer = setTimeout(() => {
-                searchSongs(e.target.value)
-            }, waitTime);
-          }
-        }
-        />
-        <div id="dropdown">
-          {songQuery.map((song, index) => (
-          <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
-            <Song 
-              id={song.songId}
-              name={song.songName}
-              coverArtURL={song.albumCover}
-              artistName={song.artistName}
-            />
-          </button>
-        ))}
+                    timer = setTimeout(() => {
+                        searchSongs(e.target.value)
+                    }, waitTime);
+                }
+                }
+                />
+            </div>
+
+            <div id="dropdown" style={{ maxHeight: '600px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+                {songQuery.map((song, index) => (
+                <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
+                    <Song 
+                    id={song.songId}
+                    name={song.songName}
+                    coverArtURL={song.albumCover}
+                    artistName={song.artistName}
+                    />
+                </button>
+                ))}
+            </div>
         </div>
-      </div>
-      
-    </div>
-  );
-}
+        {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
+    );
+  </>
+)}
 
 
 // SessionGuest component is now the source of truth for the queue of songs
