@@ -2,7 +2,13 @@ import postgres from 'postgres'
 import 'dotenv/config'
 
 
-const sql = postgres(process.env.PG_URI!)
+// const sql = postgres(process.env.PG_URI!)
+const sql = postgres({
+    host                 : process.env.PG_HOST,            // Postgres ip address[s] or domain name[s]
+    port                 : 5432,          // Postgres server port[s]
+    username             : process.env.PG_USER,            // Username of database user
+    password             : process.env.PG_PASSWORD          // Password of database user
+  })
 
 
 /*
@@ -214,9 +220,6 @@ export async function GetHostName(session_id: string) {
             WHERE sessions.session_id = ${session_id};
         `;
         
-
-
-
         if (result.length === 0) {
             return null; 
         }
@@ -225,5 +228,20 @@ export async function GetHostName(session_id: string) {
     } catch (error) {
         console.error('Error fetching host name:', error);
         throw new Error('Error fetching host name from the database.');
+    }
+}
+
+
+export async function DeleteSession(sid : string) : Promise<void> {
+
+    // Deletes session with sid and cascades to all queues and users with sid
+    const results = await sql`
+        DELETE FROM sessions
+        WHERE session_id = ${sid}
+        RETURNING session_id
+    `
+    // Check if session_id existed
+    if(results[0].length === 0) {
+        throw new Error("sid does not exist")
     }
 }

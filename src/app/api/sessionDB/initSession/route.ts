@@ -1,4 +1,4 @@
-import { GetSessionData, GetAccessToken, AddSongToQueue } from '@/src/database/db';
+import { GetSessionData } from '@/src/database/db';
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {

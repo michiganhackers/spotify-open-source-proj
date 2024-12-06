@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation'
 import { Session } from './client'
 import 'dotenv/config'
 
@@ -14,6 +15,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     const [isHostNameSet, setIsHostNameSet] = useState(false);
     
     let sid : string = params.id;
+    const router = useRouter();
 
     useEffect(() => {
         // Add host's name to DB now that session has been created
@@ -55,6 +57,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             .then((data) => {
                 console.log(data.hostname);
                 setHostName(data.hostname);
+                setUsername(sessionStorage.getItem("username") || "")
             })
             .catch((error) => {
                 console.error("Error:", error);
@@ -81,7 +84,6 @@ export default function SessionPage({ params } : { params: { id: string} }) {
               return response.json();
             })
             .then((data) => {
-              console.log("data: ",data)
               setClientNames(data.clientNames)
               setQueue(data.queue);
             })
@@ -99,12 +101,13 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
             <Session
-                isHost={isHost}
+                isHost={(sessionStorage.getItem('isHost') === "true") ? true : false}
                 sid={sid}
                 username={username}
                 hostName={hostName}
                 clientNames={clientNames}
                 queue={queue}
+                router={router}
             >      
             </Session>
         </main>  
