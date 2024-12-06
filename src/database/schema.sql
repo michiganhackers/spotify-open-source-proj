@@ -12,7 +12,7 @@ CREATE TABLE users (
     user_id SERIAL,
     username varchar(255),
     PRIMARY KEY (user_id),
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
 );
 
 CREATE TABLE queues (
@@ -22,7 +22,7 @@ CREATE TABLE queues (
     album_cover varchar(255),
     placement INT NOT NULL,
     session_id varchar(8),
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
 );
 
 ALTER TABLE sessions ADD CONSTRAINT fk_session_host_id

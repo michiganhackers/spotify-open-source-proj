@@ -21,6 +21,8 @@ export default function Home() {
   const [guestUsername, setGuest] = useState("");
   const [toastMessage, setToastMessage] = useState('');
   const router = useRouter();
+
+  
   
   useEffect(() => {
     // This effect will run only on the client side
@@ -54,9 +56,9 @@ export default function Home() {
             </button>
         </div>
         <div className="divideDiv">
-        <hr className="divider"></hr>
+          <hr className="divider"></hr>
         </div>
-        
+
         <div className="guestoptions">
             <h1>I'm a guest:</h1>
             <form data-testid="guest-form">
@@ -93,18 +95,18 @@ async function connectToSession(guestCode : string, username : string, router : 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-          guestCode: guestCode,
-          username: username
+        guestCode: guestCode,
+        username: username
       }),
     }).then((response) => {
         if(!response.ok){
           stat = response.status;
             throw Error(response.statusText);}
 
-        return response.json();
+      return response.json();
     }).then((data) => {
-        const url = data.url;
-        router.push(url);
+      const url = data.url;
+      router.push(url);
     })
   }
   catch(e){

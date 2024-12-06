@@ -12,3 +12,4 @@ docker run -d \
  -v ${PWD}/src/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql \
  postgres:14.5
 
+

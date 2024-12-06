@@ -2,7 +2,13 @@ import postgres from 'postgres'
 import 'dotenv/config'
 
 
-const sql = postgres(process.env.PG_URI!)
+// const sql = postgres(process.env.PG_URI!)
+const sql = postgres({
+    host                 : process.env.PG_HOST,            // Postgres ip address[s] or domain name[s]
+    port                 : 5432,          // Postgres server port[s]
+    username             : process.env.PG_USER,            // Username of database user
+    password             : process.env.PG_PASSWORD          // Password of database user
+  })
 
 
 /*
@@ -120,6 +126,10 @@ export async function GetSessionData(sid : string) : Promise<any> {
         throw new Error("Wrong guest code")
     }
 
+    if(hostId[0].host_id === null){ //here because the queue mount runs before the host is set
+        throw new Error("null host_id")
+    }
+
     const hostName : any[] = await sql`
         SELECT username FROM users
         WHERE user_id = ${hostId[0].host_id}
@@ -130,14 +140,13 @@ export async function GetSessionData(sid : string) : Promise<any> {
         WHERE session_id = ${sid} AND user_id <> ${hostId[0].host_id}
     `
 
-    // Returns queue in sorted order
+    //Returns queue in sorted order
     const queue : any[] = await sql`
-        SELECT song_name, artist_name, album_cover, placement
+        SELECT song_id, song_name, artist_name, album_cover, placement
         FROM queues
         WHERE session_id = ${sid}
         ORDER BY placement
     `
-    
     return {hostName: hostName[0].username, clientNames: clientNames, queue: queue}; // Return an object containing the hosts user name
 }
 
@@ -213,9 +222,6 @@ export async function GetHostName(session_id: string) {
             WHERE sessions.session_id = ${session_id};
         `;
         
-
-
-
         if (result.length === 0) {
             return null; 
         }
@@ -224,5 +230,20 @@ export async function GetHostName(session_id: string) {
     } catch (error) {
         console.error('Error fetching host name:', error);
         throw new Error('Error fetching host name from the database.');
+    }
+}
+
+
+export async function DeleteSession(sid : string) : Promise<void> {
+
+    // Deletes session with sid and cascades to all queues and users with sid
+    const results = await sql`
+        DELETE FROM sessions
+        WHERE session_id = ${sid}
+        RETURNING session_id
+    `
+    // Check if session_id existed
+    if(results[0].length === 0) {
+        throw new Error("sid does not exist")
     }
 }
