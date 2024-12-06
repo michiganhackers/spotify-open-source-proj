@@ -4,7 +4,6 @@ import { Socket } from 'socket.io-client';
 import { socketIO } from '@/src/socket/client'
 import 'dotenv/config'
 import { AddSongToQueue } from '@/src/database/db'
-import { render } from 'react-dom'
 import { getSocketInstance, removeSocketInstance } from '@/src/socket/SocketManager'
 import { v4 as uuidv4 } from "uuid";
 
