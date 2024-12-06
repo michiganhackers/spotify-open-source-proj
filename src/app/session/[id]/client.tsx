@@ -175,7 +175,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
   // Handles song submission then clears input
   const handleAddSong = (songId : string) => {
    
-    fetch('http://localhost:3000/api/spotify/addSong', { // Adds song to the database
+    fetch(`${process.env.PROD_APP_SERVER}/api/spotify/addSong`, { // Adds song to the database
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
       return;
     }
     // Requests all similar song names
-    fetch('http://localhost:3000/api/spotify/searchSongs', {
+    fetch(`${process.env.PROD_APP_SERVER}/api/spotify/searchSongs`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
