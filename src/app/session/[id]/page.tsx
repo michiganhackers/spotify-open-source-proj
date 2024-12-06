@@ -55,6 +55,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
             .then((data) => {
                 console.log(data.hostname);
                 setHostName(data.hostname);
+                setUsername(sessionStorage.getItem('username') || "");
             })
             .catch((error) => {
                 console.error("Error:", error);

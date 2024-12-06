@@ -17,7 +17,8 @@ const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, o
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
-  const [username, setUsername] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
+  const [hostUsername, setHost] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
+  const [guestUsername, setGuest] = useState("");
   const [toastMessage, setToastMessage] = useState('');
   const router = useRouter();
   
@@ -35,14 +36,14 @@ export default function Home() {
         <div className="hostoptions">
             <h1>I'm a host:</h1>
             <form data-testid="host-form">
-                <input type="text" placeholder='Username' maxLength={6} name="username" onChange={(e) => setUsername(e.target.value)}/>
+                <input type="text" placeholder='Username' maxLength={6} name="username" onChange={(e) => setHost(e.target.value)}/>
             </form>
             <button className="SubmitButton" onClick={() => {
-              if(username == ""){
+              if(hostUsername == ""){
                 setToastMessage('Error: Username is blank.');
-                setUsername('');
+                setHost('');
               } else {
-                sessionStorage.setItem("username", username); // change this to a nextjs cookie (server-side)
+                sessionStorage.setItem("username", hostUsername); // change this to a nextjs cookie (server-side)
                 sessionStorage.setItem("isHost", "true"); // change this to a nextjs cookie (server-side)
                 const client_id : string | undefined = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID; // Spotify developer client id for API calls
                 const redirect_uri : string = `http://localhost:3000/api/spotify/getToken`
@@ -60,12 +61,13 @@ export default function Home() {
             <h1>I'm a guest:</h1>
             <form data-testid="guest-form">
                 <input type="text" placeholder='Guest Code' maxLength={8} name="guestcode" value={guestCode}   onChange={(e) => setGuestCode(e.target.value.toUpperCase())}/>
-                <input type="text" placeholder='Username' maxLength={25} name="username"value={username}  onChange={(e) => setUsername(e.target.value)}/>
+                <input type="text" placeholder='Username' maxLength={25} name="username" onChange={(e) => setGuest(e.target.value)}/>
             </form>
             <button className="SubmitButton" onClick={() => {
-                sessionStorage.setItem("username", username);
+                sessionStorage.setItem("username", guestUsername);
+                // console.log(guestUsername);
                 sessionStorage.setItem("isHost", "false");
-                   connectToSession(guestCode, username, router,setToastMessage,setGuestCode, setUsername)}}>
+                   connectToSession(guestCode, guestUsername, router,setToastMessage,setGuestCode, setGuest)}}>
 
                     Join
             </button>
@@ -79,11 +81,12 @@ export default function Home() {
 }
 
 async function connectToSession(guestCode : string, username : string, router : any, setToastMessage : any, setGuestCode: any,  // Add this setter function to clear guestCode
-  setUsername: any) : Promise<void> { 
+  setGuest: any) : Promise<void> { 
    // Add this setter function to clear guestCode
   
  let stat; 
   try {
+    
     await fetch('api/sessionDB/connect', {
       method: 'POST',
       headers: {
@@ -111,10 +114,10 @@ async function connectToSession(guestCode : string, username : string, router : 
     setGuestCode('');
    }else if (stat == 409){
     setToastMessage('Error: Username already in use.');
-    setUsername('');
+    setGuest('');
    } else if (stat == 406) {
     setToastMessage('Error: Username is blank.');
-    setUsername('');
+    setGuest('');
    }
   
   }
