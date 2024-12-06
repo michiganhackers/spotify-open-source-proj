@@ -5,16 +5,18 @@ import { redirect, useRouter } from 'next/navigation'
 import { Router } from 'next/router';
 import { handleSpotifyAuth } from '@/src/utils';
 import 'dotenv/config';
+import { GetAccessToken, GetQueue } from '../database/db';
 
 export default function Home() {
   const [guestCode, setGuestCode] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
   const [username, setUsername] = useState(""); // Can be set as Next.js cookie and passed into server side session/[id]/page.tsx
 
   const router = useRouter();
+
+  
   
   useEffect(() => {
-    // This effect will run only on the client side
-    // You can place any client-side specific logic here
+
   }, []); // Empty dependency array ensures the effect runs only once on mount
 
   return (
@@ -61,8 +63,6 @@ export default function Home() {
 }
 
 async function connectToSession(guestCode : string, username : string, router : any) : Promise<void> { 
-    
-
   try {
     await fetch('api/sessionDB/connect', {
       method: 'POST',

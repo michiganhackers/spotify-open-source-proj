@@ -68,8 +68,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
         }
     }, []);
 
-    
-    useEffect(() => {
+      useEffect(() => {
         const initSession = () => {
           fetch('http://localhost:3000/api/sessionDB/initSession', {
             method: 'POST',
@@ -85,7 +84,6 @@ export default function SessionPage({ params } : { params: { id: string} }) {
               return response.json();
             })
             .then((data) => {
-              console.log("data: ",data)
               setClientNames(data.clientNames)
               setQueue(data.queue);
             })
@@ -98,8 +96,8 @@ export default function SessionPage({ params } : { params: { id: string} }) {
           if(isHostNameSet){
             initSession()
           }
-    }, [isHostNameSet]); //if it mounts on start, this useEffect runs before the username + hostID is set in the database
-    
+      }, [isHostNameSet]); //if it mounts on start, this useEffect runs before the username + hostID is set in the database
+
     return (
         <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
             <Session
@@ -115,3 +113,4 @@ export default function SessionPage({ params } : { params: { id: string} }) {
         </main>  
     )
 }
+

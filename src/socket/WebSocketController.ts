@@ -195,9 +195,7 @@ export class WebSocketController {
           const id = data.item.album.id;
       
           const storedSong = this.currentSongProgress.get(sid);
-          
-          console.log(storedSong!.progress, " - ", progress_ms, " : ", Math.abs(storedSong!.progress - progress_ms) >= 1000);
-          
+                    
           if (
             !storedSong ||
             Math.abs(storedSong.progress - progress_ms) >= 1000 ||
@@ -211,7 +209,6 @@ export class WebSocketController {
               duration: duration_ms,
             });
     
-            console.log("sent:", sid, ":", is_playing, progress_ms, duration_ms, " : ", id);
             io.to(sid).emit("retrieveProgress", { is_playing, progress_ms, duration_ms, id });
           }
         } catch (error) {
