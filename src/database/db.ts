@@ -29,6 +29,8 @@ export async function CreateUser(
         let session = users[i]['session_id']
         if (session === sid || session === "NULL") {
             throw new Error("User in this session already exists.")
+        } else if(session === ''){
+            throw new Error("User is blank.")
         }
     }
 

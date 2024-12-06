@@ -17,3 +17,8 @@ export function handleSpotifyAuth(client_id : string | undefined, redirect_uri :
         state: state
     })}`
 }
+
+//songID vs song_id => when fetching straight from spotify its the former, from database its the latter
+export function getValue(data: any, key: string) {
+    return data[key] ?? data[key.replace(/([A-Z])/g, '_$1').toLowerCase()];
+  }
