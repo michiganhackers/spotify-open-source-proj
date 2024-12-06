@@ -7,6 +7,7 @@ import { AddSongToQueue } from '@/src/database/db'
 import { render } from 'react-dom'
 import { getSocketInstance, removeSocketInstance } from '@/src/socket/SocketManager'
 import { v4 as uuidv4 } from "uuid";
+import { ProgressBar, millisecondsToString } from './progressbar';
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
   return (
@@ -88,6 +89,10 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
   const [songQuery, setSongQuery] = useState<any[]>([]);
   const [toastMessage, setToastMessage] = useState('');
 
+  const [progress, setProgress] = useState(0);
+  const [songlength, setSongLength] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
   //console.log(socket.connected)
 
     // Add song to end of the queue with all data needed for UI
@@ -114,6 +119,43 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
 
         setSongList([...updatedQueue]);
     });
+
+    socket.removeAllListeners("retrieveProgress");
+  socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number, id : string}) => {
+    //console.log("retrieved progress emission")
+    //console.log(data)
+    
+    //calc percentage of the bar can change later if need be ---------
+    //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+    console.log("seek, skip, or drift happened updating...");
+
+    setIsPlaying(data.is_playing);
+    setProgress(data.progress_ms)
+    setSongLength(data.duration_ms);
+  });
+
+    useEffect(() => {
+        let intervalId : any;
+
+        if (isPlaying) {
+        intervalId = setInterval(() => {
+            setProgress((prev) => {
+            const newProgress = prev + 1000;
+
+            if (newProgress >= songlength) {
+                clearInterval(intervalId);
+                return songlength;
+            }
+
+            return newProgress;
+            });
+        }, 1000);
+        }
+
+        return () => {
+        clearInterval(intervalId);
+        };
+    }, [isPlaying, songlength]);
 
     // Handles song submission then clears input
     const handleAddSong = (songId : string) => {
@@ -196,28 +238,45 @@ function Queue({ initQueue, socket, username, sid } : { initQueue : any[], socke
 
   return (
     <>
-        <div id="QueueWrapper" style={{ maxHeight: '800px', 
+
+        <div style={{ padding: '20px', color: 'rgb(166, 238, 166)' }}>
+                <h2>Song Progress Bar</h2>
+                <ProgressBar progress={progress} songlength={songlength} />
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <p>{millisecondsToString(progress)}</p>
+                <p>{millisecondsToString(songlength)}</p>
+                </div>
+                <p>Status: {isPlaying ? 'Playing' : 'Paused'}</p>
+            </div>
+         
+        <div id="QueueWrapper" style={{ maxHeight: '500px', 
                 overflowY: 'scroll', 
                 overflowX: 'hidden',
                 scrollbarWidth: 'none', 
                 }}>
             <h1>Queue</h1>
-            {songList.map((song) => (
-                <div key={`${song.songId}${song.placement}`}>
-                <Song 
-                    id={song.songId}
-                    name={song.songName}
-                    addedBy={song.user}
-                    coverArtURL={song.albumCover}
-                    artistName={song.artistName}
-                />
+            <div id="SongList">
+                {songList.map((song) => (
+                    <div key={`${song.songId}${song.placement}`}>
+                    <Song 
+                        id={song.songId}
+                        name={song.songName}
+                        addedBy={song.user}
+                        coverArtURL={song.albumCover}
+                        artistName={song.artistName}
+                    />
 
-                </div>
-            ))}
+                    </div>
+                ))}
+            </div>
         
         </div>
         
-        <div id="QuerySongWrapper">
+        <div id="QuerySongWrapper" style={{ maxHeight: '500px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
             <div id="AddSong">
                 <input
                 type="text"

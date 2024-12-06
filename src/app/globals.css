@@ -24,6 +24,8 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+    background-attachment: fixed;
+    height: 200vh;
 }
 
 @layer utilities {
@@ -59,7 +61,7 @@ input[type=button]{
 }
 
 .hostoptions h1 {
-    color: lightgreen;
+    color: rgb(166, 238, 166);
 }
 
 .guestoptions{
@@ -69,37 +71,7 @@ input[type=button]{
 }
 
 .guestoptions h1 {
-    color: lightgreen;
-}
-
-/*Desktop&Mac Specific*/
-@media only screen and (min-width: 1290px) {
-  /* .guestoptions {
-    display: inline-block;
-    vertical-align: middle;
-  }
-  .hostoptions {
-    display: inline-block;
-    vertical-align: middle;
-  } */
-  .options {
-    display: flex; /* Use flexbox */
-    justify-content: center;
-  }
-  .options div{
-    padding: 10px;
-  }
-  
-}
-
-/*Mobile Specific*/
-@media only screen and (max-width: 1290px) {
-  .divideDiv {
-    margin: 20px;
-    padding: 10px;
-    border: 1px solid black;
-  }
-  
+    color: rgb(166, 238, 166);
 }
 
 .background {
@@ -175,20 +147,24 @@ img {
     margin-left: 10%;
     border: 3px rgb(16, 161, 16) solid;
     border-radius: 5px;
-    color: lightgreen;
+    color: rgb(166, 238, 166);
     padding: 5px;
 }
 
 #session-header h1 {
     margin-left: 10%;
-    color: lightgreen;
+    color: rgb(166, 238, 166);
 }
 
 #QueueWrapper {
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
     width: 50%;
     margin: 0 auto;
-    border: 5px lightgreen solid;
+    border: 5px purple solid;
     border-radius: 10px;
+    background: black;
 }
 
 #QueueWrapper h1 {
@@ -197,15 +173,22 @@ img {
     top: 0;
     width:100%;
     text-align: center;
-    color: rgb(211, 223, 211);
-    border-bottom: lightgreen solid 2px;
+    color: rgb(166, 238, 166);
+    border-bottom: 5px purple solid;
+    padding: 10px;
+}
+
+#SongList {
+    border-left: 3px solid lightgreen;
+    border-right: 3px solid lightgreen;
+    width: 80%;
 }
 
 #QuerySongWrapper {
     width: 50%;
     margin: 0 auto;
     padding: 5px;
-    border: 5px lightgreen solid;
+    border: 5px green solid;
     border-radius: 10px;
 }
 
@@ -253,7 +236,8 @@ img {
 
 .song p {
     text-align: right;
-    color: white;
+    color: rgb(166, 238, 166);
+    padding-right: 5px;
 }
 
 .container {
@@ -391,3 +375,55 @@ img {
   }
 /* -------------------- */
 
+/*Desktop&Mac Specific*/
+@media only screen and (min-width: 1290px) {
+    /* .guestoptions {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .hostoptions {
+      display: inline-block;
+      vertical-align: middle;
+    } */
+    .options {
+      display: flex; /* Use flexbox */
+      justify-content: center;
+    }
+    .options div{
+      padding: 10px;
+    }
+    
+  }
+  
+  /*Mobile Specific*/
+  @media only screen and (max-width: 1290px) {
+    .divideDiv {
+      margin: 20px;
+      padding: 10px;
+      border: 1px solid black;
+    }
+  
+    .song p {
+      font-size: 10px;
+    }
+
+    #QueueWrapper {
+        width: 80%;
+    }
+
+    #QuerySongWrapper {
+        width: 80%;
+    }
+    
+    .user-name {
+      font-size: 18px;
+    }
+    
+    .end-session-button {
+        font-size: 16px;
+    }
+
+    .guest-code {
+      font-size: 28px;
+    }
+  }

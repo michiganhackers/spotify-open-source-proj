@@ -10,6 +10,10 @@ export class WebSocketController {
     private io : any;
     private checkQueueUpdatesIntervals : Map<string, any>; // checkQueueUpdates intervalID for each sid
     private userCounts : Map<string, number>; // # of users per sid
+    private currentSongProgress: Map<
+        string,
+        { progress: number; lastUpdated: number; isPlaying: boolean; duration: number }
+    >;
 
 
     /* ----- Public member functions ----- */
@@ -18,6 +22,7 @@ export class WebSocketController {
         this.io = io;
         this.checkQueueUpdatesIntervals = new Map<string, any>();
         this.userCounts = new Map<string, number>();
+        this.currentSongProgress = new Map();
     }
 
 
@@ -28,10 +33,23 @@ export class WebSocketController {
             this.incrementUserCount(sid);
             return;
         }
+
+        this.currentSongProgress.set(sid, { progress: 0, lastUpdated: 0, isPlaying: false, duration: 0 });
+
         // Calls checkQueueUpdates every 5 seconds
         let intervalID = setInterval(async () => {
+            const existing = this.currentSongProgress.get(sid);
+            this.currentSongProgress.set(sid, {
+                ...existing, 
+                progress: existing!.progress + 5000,
+                lastUpdated: existing!.lastUpdated, // Provide a default value
+                isPlaying: existing!.isPlaying,     // Provide a default value
+                duration: existing!.duration        // Provide a default value
+            })
+
             try {
                 await this.checkQueueUpdates(sid, this.io);
+                await this.syncSongProgress(sid, this.io);
             }
             catch (error : any) {
                 console.error(error);
@@ -69,7 +87,7 @@ export class WebSocketController {
                     console.log("Terminating session interval and database information");
                     this.destroySession(sid);
                 }
-            }, 10000)
+            }, 600000)
         }
     }
 
@@ -150,4 +168,54 @@ export class WebSocketController {
     
         return false; // No Queue changes detected
     }
+
+    private async syncSongProgress(sid: string, io: any): Promise<void> {
+        try {
+          const access_token = await GetAccessToken(sid);
+          const bearer = "Bearer " + access_token;
+          const url = "https://api.spotify.com/v1/me/player/currently-playing";
+      
+          const response = await fetch(url, {
+            credentials: "same-origin",
+            headers: {
+              Authorization: bearer,
+            },
+          });
+      
+          if (!response.ok) {
+            console.log(`Error fetching data for session ${sid}: ${response.statusText}`);
+            return;
+          }
+      
+          const data = await response.json();
+          const is_playing = data.is_playing;
+          const progress_ms = data.progress_ms;
+          const duration_ms = data.item.duration_ms;
+    
+          const id = data.item.album.id;
+      
+          const storedSong = this.currentSongProgress.get(sid);
+          
+          console.log(storedSong!.progress, " - ", progress_ms, " : ", Math.abs(storedSong!.progress - progress_ms) >= 1000);
+          
+          if (
+            !storedSong ||
+            Math.abs(storedSong.progress - progress_ms) >= 1000 ||
+            storedSong.isPlaying !== is_playing ||
+            storedSong.duration !== duration_ms
+          ) {
+            this.currentSongProgress.set(sid, {
+              progress: progress_ms,
+              lastUpdated: Date.now(),
+              isPlaying: is_playing,
+              duration: duration_ms,
+            });
+    
+            console.log("sent:", sid, ":", is_playing, progress_ms, duration_ms, " : ", id);
+            io.to(sid).emit("retrieveProgress", { is_playing, progress_ms, duration_ms, id });
+          }
+        } catch (error) {
+          console.error(`Failed to sync song progress for session ${sid}:`, error);
+        }
+      }
 };
