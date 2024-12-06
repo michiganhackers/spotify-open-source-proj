@@ -99,7 +99,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
       }, [isHostNameSet]); //if it mounts on start, this useEffect runs before the username + hostID is set in the database
 
     return (
-        <main id="session-main" className="background flex min-h-screen flex-col items-center justify-between p-24">
+        <main id="session-main" className="session-background flex min-h-screen flex-col items-center justify-between p-24">
             <Session
                 isHost={(sessionStorage.getItem('isHost') === "true") ? true : false}
                 sid={sid}

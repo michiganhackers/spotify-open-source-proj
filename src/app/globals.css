@@ -24,8 +24,6 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-    background-attachment: fixed;
-    height: 200vh;
 }
 
 @layer utilities {
@@ -77,6 +75,12 @@ input[type=button]{
 .background {
     background: radial-gradient(#315b25, #0a2602, #000000);
     height: 100%;
+}
+
+.session-background {
+    background: radial-gradient(#315b25, #0a2602, #000000);
+    background-attachment: fixed;
+    height: 200vh;
 }
 
 
