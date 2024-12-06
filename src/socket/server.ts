@@ -1,14 +1,6 @@
 import { Server } from "socket.io";
-import { GetAccessToken, GetQueue, GetSessionData, ReplaceQueue } from "../database/db"
-import { handleSpotifyAuth } from "@/src/utils";
 import 'dotenv/config'
-import { error, log } from "console";
-import { deprecate } from "util";
-
-/* const client_id : string | undefined = process.env.SPOTIFY_WSS_CLIENT_ID;
-const redirect_uri : string | undefined = process.env.WS_SERVER;
-const scope : string = 'user-read-currently-playing user-read-playback-state user-modify-playback-state';
-handleSpotifyAuth(client_id, redirect_uri, scope); */
+import { WebSocketController } from "./WebSocketController";
 
 const io = new Server({ 
     cors: {
@@ -16,220 +8,46 @@ const io = new Server({
     }
 });
 
-const activeSessions: Map<string, number> = new Map();
+const controller = new WebSocketController(io);
 
-const currentSongProgress: Map<
-  string,
-  { progress: number; lastUpdated: number; isPlaying: boolean; duration: number }
-> = new Map();
 
-var checkQueueUpdatesInterval : any;
-var driftCheckInterval: any;
-
-function startIntervals() {
-    if(checkQueueUpdatesInterval)
-        clearInterval(checkQueueUpdatesInterval);
-
-    checkQueueUpdatesInterval = setInterval(async () => {
-        try {
-            activeSessions.forEach(async (users, sid) => {
-                await checkQueueUpdates(sid, io);
-            });
-        }
-        catch (error : any) {
-            console.error(error);
-        }
-    }, 5000);
-
-    if (driftCheckInterval) 
-        clearInterval(driftCheckInterval);
-
-  driftCheckInterval = setInterval(async () => {
-    try {
-      currentSongProgress.forEach(async (song, sid) => {
-        /*
-        //const elapsedTime = Date.now() - song.lastUpdated;
-        const predictedProgress = song.progress + 5000;
-
-        console.log(predictedProgress, " : ", song.progress, " : ", Math.abs(predictedProgress - song.progress) >= 1000)
-
-        // If there's significant drift, fetch real data and emit only if necessary
-        if (Math.abs(predictedProgress - song.progress) >= 1000) {
-          
-        } */
-        song.progress = song.progress + 5000;
-        
-        await syncSongProgress(sid, io);
-      });
-    } catch (error: any) {
-      console.error(error);
-    }
-  }, 5000);
-}
-
-//i just realized this is completely irrelevant because the setInterval only for sids that exist...
-//if no sids and users exist, then the intervals just wont run because everyone disconnected anyway
-function stopIntervals() {
-    if (activeSessions.size === 0) {
-        console.log("closing interval")
-        clearInterval(checkQueueUpdatesInterval);
-    }
-}
-
+// let checkQueueUpdatesIntervals = new Map<string, any>();
+// var checkQueueUpdatesInterval : any;
 io.on("connection", (socket) => {
 
-    const sid : string = socket.handshake.auth.token;
-
-    if (activeSessions.has(sid)) {
-        console.log("adding session user: ", sid)
-        activeSessions.set(sid, activeSessions.get(sid)! + 1) //the ! thing is acc so cool (tells ts its not null)
-    } else {
-        console.log("creating new session with user: ", sid)
-        activeSessions.set(sid, 1);
-
-        currentSongProgress.set(sid, { progress: 0, lastUpdated: 0, isPlaying: false, duration: 0 });
-
-        startIntervals() 
-    } 
-    
     // Add user to the room (session) in which they want to connect
+    const sid : string = socket.handshake.auth.token;  
+    const headers : any = socket.handshake.headers;
+    const isHost = headers['is-host'];
+    console.log("Connection at " + socket.id);
     socket.join(sid);
 
-    // IDEA: Don't emit addSongToUI inside of sendSongToSocket
-    //       Instead, have one function running a constant check for updates to the queue 
-    /* TODO: IF HOST */
+    if(isHost === "true")
+        controller.addSessionInterval(sid);
+    else
+        controller.incrementUserCount(sid);
+
+
+    /* ----- EVENT LISTENERS ----- */
+
+    //  User adds song to queue => we should automatically call checkQueueUpdates in our controller
+    socket.on("AddedSong", async () => {
+        console.log("received added song emission")
+        await controller.checkQueue(sid);
+    });
     
-    
-    var counter = 0;
-    socket.on("sendSongToSocket", (songData) => {
-        console.log(counter)
-        console.log(songData)
-        console.log("received song from client")
+    //  Host presses end session button => we should call controller.deleteSession()
+    socket.on("EndSession", async () => {
+        console.log("received end session emission")
+        await controller.endSession(sid);
+    });
 
-        socket.to(sid).emit("addSongToUI", songData) // Send the song to ALL users in the session (including sender)
-        console.log("sending song to session members at: " + sid)
-        counter++;
-    })
-
-    socket.on("sendSongsToSearch", (songData) => {
-        socket.broadcast.to(songData.sid).emit("addSongToUI", songData)
-    })
-
+    // User disconnects from session
     socket.on("disconnect", () => {
-        console.log("Disconnecting from socket for " + sid);
-
-        if (activeSessions.has(sid)) {
-            const users = activeSessions.get(sid)! - 1;
-            
-            if(users < 0){
-                throw error("users count was somehow less than 0: ", sid)
-            }
-            else if (users == 0) {
-                //eventually later implement differentiating between a session host leaving and a session listener leaving
-                console.log("no users left in the session: ", sid)
-                activeSessions.delete(sid)
-                currentSongProgress.delete(sid);
-                //do we actually need this?
-                //stopIntervals();
-            } else {
-                // Update the count for the session
-                console.log(`${users} users left in the session: `, sid)
-                activeSessions.set(sid, users);
-            }
-        }
+        console.log("Disconnecting socket id: " + socket.id);
+        controller.decrementUserCount(sid); // Remove user from session in controller
     })
 });
 
 
 io.listen(8080);
-
-
-async function checkQueueUpdates(sid : string, io : any) : Promise<boolean> {
-    console.log("Checking queue disparities for " + sid);
-    const access_token = await GetAccessToken(sid);
-    const url = 'http://localhost:3000/api/spotify/getQueue';
-    const response = await fetch(url, { 
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            accessToken: access_token
-        })
-    });
-
-    if(!response.ok)  {
-        console.error(response.statusText);
-        return false; // DB queue doesn't change, return false
-    }
-
-    const data = await response.json();
-
-    const queue : any[] = data.queue;
-    const dbQueue : any[] = await GetQueue(sid);
-        
-    for(let index = 0; index < queue.length; index++) {
-        let songId : string = queue[index].songId;
-
-        // Song comparison logic to current database state
-        if(queue.length !== dbQueue.length || songId != dbQueue[index].song_id) {
-            console.log("Found queue disparity!");
-            await ReplaceQueue(sid, queue); // Replace queue in DB
-            io.to(sid).emit("UpdateQueueUI", queue); // Send updated queue to all users in session
-            return true;
-        }
-    }
-
-    return false; // No Queue changes detected
-}
-
-async function syncSongProgress(sid: string, io: any): Promise<void> {
-    try {
-      const access_token = await GetAccessToken(sid);
-      const bearer = "Bearer " + access_token;
-      const url = "https://api.spotify.com/v1/me/player/currently-playing";
-  
-      const response = await fetch(url, {
-        credentials: "same-origin",
-        headers: {
-          Authorization: bearer,
-        },
-      });
-  
-      if (!response.ok) {
-        console.log(`Error fetching data for session ${sid}: ${response.statusText}`);
-        return;
-      }
-  
-      const data = await response.json();
-      const is_playing = data.is_playing;
-      const progress_ms = data.progress_ms;
-      const duration_ms = data.item.duration_ms;
-
-      const id = data.item.album.id;
-  
-      const storedSong = currentSongProgress.get(sid);
-      
-      console.log(storedSong!.progress, " - ", progress_ms, " : ", Math.abs(storedSong!.progress - progress_ms) >= 1000);
-      
-      if (
-        !storedSong ||
-        Math.abs(storedSong.progress - progress_ms) >= 1000 ||
-        storedSong.isPlaying !== is_playing ||
-        storedSong.duration !== duration_ms
-      ) {
-        currentSongProgress.set(sid, {
-          progress: progress_ms,
-          lastUpdated: Date.now(),
-          isPlaying: is_playing,
-          duration: duration_ms,
-        });
-
-        console.log("sent:", sid, ":", is_playing, progress_ms, duration_ms, " : ", id);
-        io.to(sid).emit("retrieveProgress", { is_playing, progress_ms, duration_ms, id });
-      }
-    } catch (error) {
-      console.error(`Failed to sync song progress for session ${sid}:`, error);
-    }
-  }

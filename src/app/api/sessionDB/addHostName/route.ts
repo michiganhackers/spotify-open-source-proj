@@ -9,7 +9,14 @@ export async function POST(req: Request) {
     const hostname = data.username;
     const sid = data.sid;
 
-    CreateUser(hostname, sid, true);
+    try {
+        CreateUser(hostname, sid, true);
+    }
+    catch(err : any) {return NextResponse.json(
+        { message: "Host already exists" },
+        { status: 409 }
+    )}
+    
 
     return NextResponse.json({ status: 200 })
 }

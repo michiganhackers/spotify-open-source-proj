@@ -187,16 +187,26 @@ img {
 #QueueWrapper {
     width: 50%;
     margin: 0 auto;
-    padding: 5px;
     border: 5px lightgreen solid;
     border-radius: 10px;
 }
 
 #QueueWrapper h1 {
+    background: radial-gradient(#315b25, #0a2602, #000000);
+    position: sticky;
+    top: 0;
     width:100%;
     text-align: center;
     color: rgb(211, 223, 211);
     border-bottom: lightgreen solid 2px;
+}
+
+#QuerySongWrapper {
+    width: 50%;
+    margin: 0 auto;
+    padding: 5px;
+    border: 5px lightgreen solid;
+    border-radius: 10px;
 }
 
 #AddSong {
@@ -213,8 +223,17 @@ img {
 }
 
 .song {
-    background-color: rgb(46, 43, 43);
-    display: flex;
+  background-color: rgb(46, 43, 43);
+  display: flex;
+  transition: background-color 0.3s; 
+}
+
+.song:hover {
+  background-color: rgb(80, 80, 80);
+}
+
+.song:active {
+  background-color: rgb(60, 60, 60);
 }
 
 .cover-art img {
@@ -303,3 +322,72 @@ img {
 .session-header-middle{
   padding-right:30px;
 }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(75, 65, 65, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  transition: opacity 0.5s;
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 600px;
+}
+.toast button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+/* End session overlay styles */
+.end-session-overlay {
+    position: absolute; /* Ensure it stays within the container */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+    display: flex; /* Enable flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    z-index: 10; /* Ensure it overlays other elements */
+  }
+  
+  .end-session-overlay-content {
+    background-color: white;
+    padding: 20px 40px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  }
+  
+  .end-session-overlay-content p {
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .end-session-overlay-content button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .end-session-overlay-content button:hover {
+    background-color: #0056b3;
+  }
+/* -------------------- */
+
