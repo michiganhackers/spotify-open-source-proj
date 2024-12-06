@@ -84,7 +84,7 @@ interface QueueProps {
   onSongAdded: (song: string) => void;
 }
 
-function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket: any, username: string, sid: string }) {
+function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean, initQueue: any[], socket: any, username: string, sid: string }) {
   // Function body
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
@@ -96,6 +96,10 @@ function Queue({ initQueue, socket, username, sid }: { initQueue: any[], socket:
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
+
+    if(isHost) {
+        socket.emit("AddedSong"); // This will force the websocket server to automatically update the queue when the host joins
+    }
 
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
       const songData = {
@@ -355,6 +359,7 @@ function SessionGuest( {hostName, clientNames, queue, username, socket, sid, rou
       </div>
       <div id="session-body">
         <Queue
+          isHost={false}
           initQueue={queue}
           socket={socket}
           username={username}
@@ -392,6 +397,7 @@ function SessionHost({hostName, clientNames, queue, username, socket, sid, route
         </div>
         <div id="session-body">
           <Queue
+            isHost={true}
             initQueue={queue}
             socket={socket}
             username={username}

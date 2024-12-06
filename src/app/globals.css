@@ -312,7 +312,7 @@ img {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(75, 65, 65, 0.8);
+  background-color: rgb(136, 0, 221); /*all toast is purple*/
   color: white;
   padding: 10px 20px;
   border-radius: 5px;

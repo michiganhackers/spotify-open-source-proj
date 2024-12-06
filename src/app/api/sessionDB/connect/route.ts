@@ -10,6 +10,13 @@ export async function POST(req: Request) {
     const guestCode : string = data.guestCode;
 
     const username : string = data.username;
+    if(username == ""){
+            return NextResponse.json(
+                { message: "Username is blank." },
+                { status: 406 }
+            )
+
+    }
 
     let sid : string;
     try {
@@ -26,9 +33,12 @@ export async function POST(req: Request) {
         await CreateUser(username, sid, false);
     }
     catch (e) {
+        console.log("Duplicate user")
+
         return NextResponse.json(
-            { status: 500 }
-        )
+            { message: "User already exists" },
+            { status: 409 }
+        ) 
     }
     
     // If passes all checks, redirect to session page
