@@ -63,7 +63,13 @@ SPOTIFY_CLIENT_SECRET="<your-spotify-client-secret>"
 
 ### Next.js Application Setup
 
-To run the development server:
+Install dependencies:
+
+```
+npm i
+```
+
+Run the development server:
 
 ```bash
 npm run dev
