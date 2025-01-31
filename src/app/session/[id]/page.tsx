@@ -20,7 +20,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
     useEffect(() => {
         // Add host's name to DB now that session has been created
         if(sessionStorage.getItem('isHost') === "true") {
-            fetch(`${process.env.PROD_APP_SERVER}/api/sessionDB/addHostName`, {
+            fetch(`${process.env.APP_SERVER}/api/sessionDB/addHostName`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -43,7 +43,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
         }
         else{
             // This functionality below should be encompassed by initSession, including the clientNames and current queue state as well
-            fetch(`${process.env.PROD_APP_SERVER}/api/sessionDB/getHostName?session_id=${params.id}`, {
+            fetch(`${process.env.APP_SERVER}/api/sessionDB/getHostName?session_id=${params.id}`, {
                 method: "GET", 
                 headers: {
                     'Content-Type': 'application/json'
@@ -70,7 +70,7 @@ export default function SessionPage({ params } : { params: { id: string} }) {
 
       useEffect(() => {
         const initSession = () => {
-          fetch(`${process.env.PROD_APP_SERVER}/api/sessionDB/initSession`, {
+          fetch(`${process.env.APP_SERVER}/api/sessionDB/initSession`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
