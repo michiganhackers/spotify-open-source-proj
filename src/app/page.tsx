@@ -89,7 +89,7 @@ async function connectToSession(guestCode : string, username : string, router : 
  let stat; 
   try {
     
-    await fetch(`${process.env.APP_SERVER}/api/sessionDB/connect`, {
+    await fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/sessionDB/connect`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
