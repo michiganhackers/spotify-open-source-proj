@@ -63,7 +63,13 @@ SPOTIFY_CLIENT_SECRET="<your-spotify-client-secret>"
 
 ### Next.js Application Setup
 
-To run the development server:
+Install dependencies:
+
+```
+npm i
+```
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -101,7 +107,7 @@ The responsibility of the client is to provide a web interface for which users c
 
 #### 2. Next.js Server
 
-The responsibility of the server is to maintain and arbitrate the state of a given session (as well as to serve front-end files that will be used by the client, but this is all done behind the scenes with Next so no need to worry too much about this). This means that any call that will interact with a user's Spotify queue must travel through the Next.js server via one of its api endpoints (defined in /api/spotify/). In addition to this, the server provides clear methods for initializing and connecting to sessions (/api/sessionDB/{connect | create}). This also means that the Next.js server is responsible for the destruction of said sessions and any related clean up calls to the database ** yet to be implemented **.
+The responsibility of the server is to maintain and arbitrate the state of a given session (as well as to serve front-end files that will be used by the client, but this is all done behind the scenes with Next so no need to worry too much about this). This means that any call that will interact with a user's Spotify queue must travel through the Next.js server via one of its api endpoints (defined in /api/spotify/). In addition to this, the server provides clear methods for initializing and connecting to sessions (/api/sessionDB/{connect | create}). This also means that the Next.js server is responsible for the destruction of said sessions and any related clean up calls to the database (/api/sessionDB/delete).
 
 #### 2.1. Database!!
 Speaking of the database, a dedicated library of database focused functions are defined within the /database/db.ts file. These functions are available for access by both the Next.js server and its Websocket counterpart, but should **not** be utilized within any direct client component. In addition to this, you will find the schema of said database is accessible within the /database/ directory.
