@@ -174,8 +174,8 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
 
   // Handles song submission then clears input
   const handleAddSong = (songId : string) => {
-   
-    fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/addSong`, { // Adds song to the database
+    
+    fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/addSong`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -197,17 +197,23 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
             artistName: data.responseBody.artistName, 
             placement: data.responseBody.placement,
         };
-        // Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
+        // Emit WebSocket event to update the queue
         try {
             socket.emit('AddedSong');
         }
         catch (error) {
-            console.error(error)
+            console.error(error);
         }
-      setToastMessage(` Successfully added: ${data.responseBody.songName}`);
-      setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
-    }).catch((error) => console.log(error))
+      
+        // Reset search bar and search options
+        setSongInput("");
+        setSongQuery([]);
+      
+        setToastMessage(` Successfully added: ${data.responseBody.songName}`);
+        setTimeout(() => setToastMessage(''), 3000);
+    }).catch((error) => console.log(error));
   };
+
 
   // Can be used to have song "suggestions" for similar song names later
   const searchSongs = (input: string) => {
