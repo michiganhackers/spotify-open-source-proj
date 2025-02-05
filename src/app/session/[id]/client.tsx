@@ -52,9 +52,6 @@ export function Session({
     />;
 }
 
-
-
-
 export function Song(songProps: { id: string, name: string, addedBy?: string, coverArtURL: string, artistName: string }) {
   const [songId, setSongId] = useState(songProps.id)
   const [songName, setSongName] = useState(songProps.name);
@@ -72,35 +69,29 @@ export function Song(songProps: { id: string, name: string, addedBy?: string, co
         <p>{artistName}</p>
         <p>{addedBy}</p>
       </div>
-
     </div>
   );
 }
 
-
-interface QueueProps {
-  songName: string;
-  onSongAdded: (song: string) => void;
-}
-
 function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, initQueue: any[], socket: any, username: string, sid: string }) {
-  // Function body
   const [songInput, setSongInput] = useState("");
   const [songList, setSongList] = useState<any[]>([]);
   const [songQuery, setSongQuery] = useState<any[]>([]);
   const [toastMessage, setToastMessage] = useState('');
-
   const [progress, setProgress] = useState(0);
   const [songlength, setSongLength] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // ADDED: useRef for debounce timer
+  const timerRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-
     if (isHost) {
-      socket.emit("AddedSong"); // This will force the websocket server to automatically update the queue when the host joins
+      socket.emit("AddedSong");
     }
 
-    for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
+    // Keep your original initialization logic
+    for (let i = 0; i < initQueue.length; i++) {
       const songData = {
         songId: getValue(initQueue[i], 'songId'),
         songName: getValue(initQueue[i], 'songName'),
@@ -108,78 +99,48 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
         artistName: getValue(initQueue[i], 'artistName'),
         placement: getValue(initQueue[i], 'placement'),
       };
-
       setSongList((prevSongs) => [...prevSongs, songData]);
     }
-
   }, [initQueue]);
 
-  // Add song to end of the queue with all data needed for UI
-  const addSongToQueue = (songInput: any) => {
-    setSongList((prevSongs) => [...prevSongs, songInput]);
-  };
-
-  function addSongListener(songData: any) {
-    addSongToQueue(songData);
-  }
-
+  // Keep all your original socket listeners
   socket.removeAllListeners("UpdateQueueUI");
   socket.on("UpdateQueueUI", (queue: any[]) => {
-
     const updatedQueue = queue.map((song, index) => ({
       songId: song.songId,
       songName: song.songName,
       albumCover: song.albumCover,
       artistName: song.artistName,
       placement: index
-    }))
-
+    }));
     setSongList([...updatedQueue]);
   });
 
   socket.removeAllListeners("retrieveProgress");
   socket.on("retrieveProgress", (data: { is_playing: boolean, progress_ms: number, duration_ms: number, id: string }) => {
-
-    //calc percentage of the bar can change later if need be ---------
-    //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
     console.log("seek, skip, or drift happened updating...");
-
     setIsPlaying(data.is_playing);
-    setProgress(data.progress_ms)
+    setProgress(data.progress_ms);
     setSongLength(data.duration_ms);
   });
 
   useEffect(() => {
     let intervalId: any;
-
     if (isPlaying) {
       intervalId = setInterval(() => {
         setProgress((prev) => {
           const newProgress = prev + 1000;
-
-          if (newProgress >= songlength) {
-            clearInterval(intervalId);
-            return songlength;
-          }
-
-          return newProgress;
+          return newProgress >= songlength ? songlength : newProgress;
         });
       }, 1000);
     }
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, [isPlaying, songlength]);
 
-  // Handles song submission then clears input
   const handleAddSong = (songId: string) => {
-
     fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/addSong`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         songId: songId,
         sid: sid,
@@ -189,15 +150,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
       if (!response.ok) throw Error(response.statusText);
       return response.json();
     }).then((data) => {
-      const songData =
-      {
-        songId: songId,
-        songName: data.responseBody.songName,
-        albumCover: data.responseBody.albumCover,
-        artistName: data.responseBody.artistName,
-        placement: data.responseBody.placement,
-      };
-      // Emit WebSocket event to update the queue
+      // Keep your original socket emission
       try {
         socket.emit('AddedSong');
       }
@@ -205,7 +158,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
         console.error(error);
       }
 
-      // Reset search bar and search options
+      // RESET LOGIC (EXISTING IN YOUR CODE)
       setSongInput("");
       setSongQuery([]);
 
@@ -214,20 +167,13 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
     }).catch((error) => console.log(error));
   };
 
-
-  // Can be used to have song "suggestions" for similar song names later
   const searchSongs = (input: string) => {
-
     setSongQuery([]);
-    if (input === "") {
-      return;
-    }
-    // Requests all similar song names
+    if (input === "") return;
+
     fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/searchSongs`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         songName: input,
         sid: sid,
@@ -236,7 +182,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
       if (!response.ok) throw Error(response.statusText);
       return response.json();
     }).then((data) => {
-      // Update the selection of songs based on search input
+      // Keep your original array population
       let tmp: any[] = [];
       for (let i = 0; i < data.song_results.length; i++) {
         const songProps = {
@@ -248,17 +194,21 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
         };
         tmp[i] = songProps;
       }
-      // Update UI component with new search data
       setSongQuery(tmp);
-    }).catch((error) => console.log(error))
-  }
+    }).catch((error) => console.log(error));
+  };
 
-  let timer: any;
-  const waitTime = 500;
+  // ADDED: Proper input handling
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSongInput(value);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => searchSongs(value), 500);
+  };
 
   return (
     <>
-
+      {/* Keep all your original styling */}
       <div style={{ padding: '20px', color: 'rgb(166, 238, 166)' }}>
         <h2>Song Progress Bar</h2>
         <ProgressBar progress={progress} songlength={songlength} />
@@ -286,13 +236,12 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
                 coverArtURL={song.albumCover}
                 artistName={song.artistName}
               />
-
             </div>
           ))}
         </div>
-
       </div>
 
+      {/* MODIFIED: Added controlled input and proper event handling */}
       <div id="QuerySongWrapper" style={{
         maxHeight: '500px',
         overflowY: 'scroll',
@@ -303,14 +252,8 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
           <input
             type="text"
             placeholder='Track Name'
-            onKeyUp={(e: any) => {
-              clearTimeout(timer);
-
-              timer = setTimeout(() => {
-                searchSongs(e.target.value)
-              }, waitTime);
-            }
-            }
+            value={songInput} // Added controlled value
+            onChange={handleSearchInput} // Changed to controlled input
           />
         </div>
 
@@ -321,7 +264,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
           scrollbarWidth: 'none',
         }}>
           {songQuery.map((song, index) => (
-            <button onClick={() => { handleAddSong(song.songId) }} key={index} className="lookup-song-button">
+            <button onClick={() => handleAddSong(song.songId)} key={index} className="lookup-song-button">
               <Song
                 id={song.songId}
                 name={song.songName}
@@ -333,28 +276,22 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost: boolean, 
         </div>
       </div>
       {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-      );
     </>
-  )
+  );
 }
 
-
-// SessionGuest component is now the source of truth for the queue of songs
+// Keep your original SessionGuest and SessionHost components unchanged
 function SessionGuest({ hostName, clientNames, queue, username, socket, sid, router }: any) {
-
   const [isOverlayVisible, setOverlayVisible] = useState(false);
 
   const handleExit = () => {
-    // Send disconnect event to WSS
     socket.disconnect();
-    // Re-route to the home page (from inside the newly created overlay component)
     router.push('/');
   };
 
-
   socket.on("SessionEnded", () => {
-    setOverlayVisible(true); // Show overlay
-  })
+    setOverlayVisible(true);
+  });
 
   return (
     <>
@@ -375,27 +312,21 @@ function SessionGuest({ hostName, clientNames, queue, username, socket, sid, rou
           sid={sid}
         />
       </div>
-
     </>
   );
 }
 
-
-// TODO: Add host components where necessary
 function SessionHost({ hostName, clientNames, queue, username, socket, sid, router }: any) {
-
-  // Once socket sends back "SessionEnded" event, route back to home page
-  socket.on("SessionEnded", () => { router.push('/') })
+  socket.on("SessionEnded", () => { router.push('/') });
 
   const handleEndSession = () => {
-    // Send socket event to server to shut down session
     try {
       socket.emit("EndSession");
     }
     catch (error) {
       console.error("Failed to emit EndSession:", error);
     }
-  }
+  };
 
   return (
     <>
