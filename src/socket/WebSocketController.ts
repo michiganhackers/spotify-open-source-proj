@@ -78,7 +78,7 @@ export class WebSocketController {
         }
 
         if(this.userCounts.get(sid) === 0) {
-            console.log("Starting 10 second timeout...");
+            console.log("Starting 1 minute timeout...");
             // Wait X minutes to ensure that nobody is coming back to the session 
             // This is for the case where the host leaves the app and never manually shuts down the session
             // Not a guaranteed solution, just a heuristic so that we can estimate when nobody is using the app anymore
@@ -87,7 +87,7 @@ export class WebSocketController {
                     console.log("Terminating session interval and database information");
                     this.destroySession(sid);
                 }
-            }, 600000)
+            }, 60000)
         }
     }
 
