@@ -140,31 +140,31 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
     socket.removeAllListeners("retrieveProgress");
     socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number, id : string}) => {
 
-    //calc percentage of the bar can change later if need be ---------
-    //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
-    console.log("seek, skip, or drift happened updating...");
+        //calc percentage of the bar can change later if need be ---------
+        //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+        console.log("seek, skip, or drift happened updating...");
 
-    setIsPlaying(data.is_playing);
-    setProgress(data.progress_ms)
-    setSongLength(data.duration_ms);
-  });
+        setIsPlaying(data.is_playing);
+        setProgress(data.progress_ms)
+        setSongLength(data.duration_ms);
+    });
 
-    useEffect(() => {
+    useEffect(() => { // Progress bar initialization, should check if a song is currently playing, then start an interval
         let intervalId : any;
 
         if (isPlaying) {
-        intervalId = setInterval(() => {
-            setProgress((prev) => {
-            const newProgress = prev + 1000;
+            intervalId = setInterval(() => {
+                setProgress((prev) => {
+                const newProgress = prev + 1000;
 
-            if (newProgress >= songlength) {
-                clearInterval(intervalId);
-                return songlength;
-            }
+                if (newProgress >= songlength) {
+                    clearInterval(intervalId);
+                    return songlength;
+                }
 
-            return newProgress;
-            });
-        }, 1000);
+                return newProgress;
+                });
+            }, 1000);
         }
 
         return () => {
@@ -324,7 +324,6 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
             </div>
         </div>
         {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-    );
   </>
 )}
 
