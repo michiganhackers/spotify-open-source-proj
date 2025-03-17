@@ -8,6 +8,7 @@ import { getSocketInstance, removeSocketInstance } from '@/src/socket/SocketMana
 import { v4 as uuidv4 } from "uuid";
 import { ProgressBar, millisecondsToString } from './progressbar';
 import { getValue } from '@/src/utils';
+import { EndSessionOverlay } from "@/src/app/session/[id]/EndSessionOverlay"
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
   return (
@@ -338,7 +339,7 @@ function SessionGuest( {hostName, clientNames, queue, username, socket, sid, rou
     };
 
     socket.on("SessionEnded", () => {
-        setOverlayVisible(true); // Show overlay
+        setOverlayVisible(true);
     })
 
   return (
@@ -360,7 +361,14 @@ function SessionGuest( {hostName, clientNames, queue, username, socket, sid, rou
           sid={sid}
         />
       </div>
-
+    {
+      isOverlayVisible ? 
+      <>
+        <EndSessionOverlay onReturnToHome={handleExit}/>
+      </> 
+      : <>
+      </>
+    }
     </>
   );
 }
