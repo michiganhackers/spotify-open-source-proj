@@ -11,6 +11,6 @@ export function socketIO(sid : string, isHost : boolean) {
         extraHeaders: {
             "is-host": (isHost ? "true" : "false")
         },
-        autoConnect: false,
+        autoConnect: true,
     }); // Initialize the client-side websocket
 }

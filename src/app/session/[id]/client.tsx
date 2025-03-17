@@ -25,10 +25,9 @@ export function Session({
     isHost : boolean, sid : string, username : string,
     hostName : string, clientNames : string[], queue : any[], router : any
 }) {
-    
     // Create a non-changing socket
     const userSessionId = useRef(uuidv4()); // unique identifier per user session
-    const socket = getSocketInstance(sid, userSessionId.current, isHost).connect();
+    const socket = getSocketInstance(sid, userSessionId.current, isHost);  
 
     if(isHost)
         return <SessionHost 
@@ -95,11 +94,6 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-
-    if(isHost) {
-        socket.emit("AddedSong"); // This will force the websocket server to automatically update the queue when the host joins
-    }
-
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
       const songData = {
         songId: getValue(initQueue[i], 'songId'),
@@ -107,11 +101,14 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
         albumCover: getValue(initQueue[i], 'albumCover'),
         artistName: getValue(initQueue[i], 'artistName'),
         placement: getValue(initQueue[i], 'placement'),
-    };
+        };
 
       setSongList((prevSongs) => [...prevSongs, songData]);
     }
 
+    if(isHost) {
+        socket.emit("AddedSong"); // This will force the websocket server to automatically update the queue when the host joins
+    }
   }, [initQueue]);
 
     // Add song to end of the queue with all data needed for UI
@@ -339,7 +336,6 @@ function SessionGuest( {hostName, clientNames, queue, username, socket, sid, rou
         // Re-route to the home page (from inside the newly created overlay component)
         router.push('/');
     };
-
 
     socket.on("SessionEnded", () => {
         setOverlayVisible(true); // Show overlay
