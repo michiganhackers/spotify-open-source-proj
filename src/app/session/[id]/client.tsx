@@ -269,7 +269,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                 overflowX: 'hidden',
                 scrollbarWidth: 'none', 
                 }}>
-            <h1>Queue</h1>
+            <h1 className="queue-header">Queue</h1>
             <div id="SongList">
                 {songList.map((song) => (
                     <div key={`${song.songId}${song.placement}`}>

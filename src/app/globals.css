@@ -256,34 +256,30 @@ img {
   justify-content: center;
   align-items: flex-end;
   flex-direction: column;
-  /* background-color: blue; */
+  
 }
 
 img.spotify-logo{
   width: 50px;
   height: 50px;
   border-radius: 100%;
-  
-  /* filter: invert(1); Turns green parts black */
-  /* mix-blend-mode: multiply; */
   filter: brightness(70%);
-  background-color: white;
   border: 1px black solid;
   margin-right: 10px;
   transition: all 0.2s ease-in;
-  pointer-events: auto;
+  z-index:1000;
 }
 
 img.spotify-logo:hover{
-  /* background-color: white; */
-  /* background-color: rgba(203, 202, 202, 0.935); */
   filter: brightness(100%);
   border: 1px white solid;
   box-shadow: 2px 2px 5px black;
   transition: all 0.1s ease-in;
-  z-index: 100;
 }
 
+.queue-header{
+  z-index: 1;
+}
 
 .song-text p {
     text-align:left;
