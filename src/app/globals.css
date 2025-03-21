@@ -214,10 +214,14 @@ img {
   display: flex;
   transition: background-color 0.3s; 
 }
-
 .song:hover {
+  background-color: rgb(67, 67, 67);
+}
+
+.song:hover:not(:has(img.spotify-logo:hover)) {
   background-color: rgb(80, 80, 80);
 }
+
 
 .song:active {
   background-color: rgb(60, 60, 60);
@@ -238,10 +242,65 @@ img {
     flex: 2;
 }
 
-.song p {
-    text-align: right;
-    color: rgb(166, 238, 166);
+.song-text {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-direction: row;
+    height: 100%;
+}
+
+.song-content{
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  flex-direction: column;
+  /* background-color: blue; */
+}
+
+img.spotify-logo{
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  
+  /* filter: invert(1); Turns green parts black */
+  /* mix-blend-mode: multiply; */
+  filter: brightness(70%);
+  background-color: white;
+  border: 1px black solid;
+  margin-right: 10px;
+  transition: all 0.2s ease-in;
+  pointer-events: auto;
+}
+
+img.spotify-logo:hover{
+  /* background-color: white; */
+  /* background-color: rgba(203, 202, 202, 0.935); */
+  filter: brightness(100%);
+  border: 1px white solid;
+  box-shadow: 2px 2px 5px black;
+  transition: all 0.1s ease-in;
+  z-index: 100;
+}
+
+
+.song-text p {
+    text-align:left;
     padding-right: 5px;
+    color: rgb(166, 238, 166);
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Adjust spacing between lines */
+}
+
+.song p {
+    /*text-align: right;
+    padding-right: 5px;
+    color: rgb(166, 238, 166);
+    display: flex;
+    flex-direction: column;
+    gap: 5px; */
 }
 
 .container {

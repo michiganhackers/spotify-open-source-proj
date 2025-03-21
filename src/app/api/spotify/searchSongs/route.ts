@@ -37,7 +37,8 @@ export async function POST(req: Request) {
                 "songId": item.id,
                 "songName": item.name,
                 "albumCover": item.album.images[0].url,
-                "artistName": item.artists[0].name
+                "artistName": item.artists[0].name,
+                "spotifyURL": item.external_urls.spotify
             })
         });
     }

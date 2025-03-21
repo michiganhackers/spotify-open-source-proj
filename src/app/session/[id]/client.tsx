@@ -55,12 +55,14 @@ export function Session({
 
 
 
-export function Song(songProps: { id: string, name: string, addedBy?: string, coverArtURL: string, artistName: string }) {
+export function Song(songProps: { id: string, name: string, addedBy?: string, coverArtURL: string, artistName: string, spotifyURL: string }) {
   const [songId, setSongId] = useState(songProps.id)
   const [songName, setSongName] = useState(songProps.name);
   const [addedBy, setAddedBy] = useState(songProps.addedBy);
   const [coverArtFile, setCoverArtFile] = useState(songProps.coverArtURL);
   const [artistName, setArtistName] = useState(songProps.artistName);
+  const [spotifyURL, setSpotifyURL] = useState(songProps.spotifyURL)
+
 
   return (
     <div className="song">
@@ -68,10 +70,16 @@ export function Song(songProps: { id: string, name: string, addedBy?: string, co
         <img src={coverArtFile} alt="" />
       </div>
       <div className="song-info">
-        <p>{songName}</p>
-        <p>{artistName}</p>
-        <p>{addedBy}</p>
+        <div className="song-text">
+          <div className="song-content">
+            <p>{songName}</p>
+            <p>{artistName}</p>
+            <p>{addedBy}</p>
+          </div>
+            <a href={spotifyURL} target="_blank" onClick={(e) => e.stopPropagation()}><img className="spotify-logo" src="../Spotify_Primary_Logo_RGB_Green.png" alt="Spotify logo"></img></a>
+        </div>
       </div>
+
 
     </div>
   );
@@ -97,11 +105,12 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
   useEffect(() => {
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
       const songData = {
-        songId: getValue(initQueue[i], 'songId'),
-        songName: getValue(initQueue[i], 'songName'),
-        albumCover: getValue(initQueue[i], 'albumCover'),
-        artistName: getValue(initQueue[i], 'artistName'),
-        placement: getValue(initQueue[i], 'placement'),
+            songId: getValue(initQueue[i], 'songId'),
+            songName: getValue(initQueue[i], 'songName'),
+            albumCover: getValue(initQueue[i], 'albumCover'),
+            artistName: getValue(initQueue[i], 'artistName'),
+            placement: getValue(initQueue[i], 'placement'),
+            spotifyURL: getValue(initQueue[i], 'spotifyURL')
         };
 
       setSongList((prevSongs) => [...prevSongs, songData]);
@@ -129,7 +138,8 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                 songName: song.songName,
                 albumCover: song.albumCover,
                 artistName: song.artistName,
-                placement: index
+                placement: index,
+                spotifyURL: song.spotifyURL
             }))
 
         setSongList([...updatedQueue]);
@@ -187,14 +197,6 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
         if (!response.ok) throw Error(response.statusText);
         return response.json();
     }).then((data) => {
-        const songData = 
-        {  
-            songId: songId,
-            songName: data.responseBody.songName,
-            albumCover: data.responseBody.albumCover,
-            artistName: data.responseBody.artistName, 
-            placement: data.responseBody.placement,
-        };
         // Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
         try {
             socket.emit('AddedSong');
@@ -231,14 +233,15 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
       // Update the selection of songs based on search input
       let tmp: any[] = [];
       for (let i = 0; i < data.song_results.length; i++) {
-        const songProps = {
-          songId: data.song_results[i].songId,
-          songName: data.song_results[i].songName,
-          user: username,
-          albumCover: data.song_results[i].albumCover,
-          artistName: data.song_results[i].artistName,
-        };
-        tmp[i] = songProps;
+            const songProps = {
+                songId: data.song_results[i].songId,
+                songName: data.song_results[i].songName,
+                user: username,
+                albumCover: data.song_results[i].albumCover,
+                artistName: data.song_results[i].artistName,
+                spotifyURL: data.song_results[i].spotifyURL
+            };
+            tmp[i] = songProps;
       }
       // Update UI component with new search data
       setSongQuery(tmp);
@@ -276,6 +279,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                         addedBy={song.user}
                         coverArtURL={song.albumCover}
                         artistName={song.artistName}
+                        spotifyURL={song.spotifyURL}
                     />
 
                     </div>
@@ -316,6 +320,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                     name={song.songName}
                     coverArtURL={song.albumCover}
                     artistName={song.artistName}
+                    spotifyURL={song.spotifyURL}
                     />
                 </button>
                 ))}
