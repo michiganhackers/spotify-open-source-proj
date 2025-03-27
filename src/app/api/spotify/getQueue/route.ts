@@ -1,3 +1,4 @@
+import { Song } from "@/src/app/session/[id]/client";
 import { NextResponse } from "next/server";
 
 // REQUIRES: req contains the access token of the host of the session
@@ -32,7 +33,8 @@ export async function POST(req: Request) {
         songName: currentSong.name,
         albumCover: currentSong.album.images[0].url,
         artistName: currentSong.artists[0].name,
-        placement: 1
+        placement: 1,
+        spotifyURL: currentSong.external_urls.spotify
     }
     queue.push(currentSongObject);
 
@@ -43,8 +45,10 @@ export async function POST(req: Request) {
             songName: song.name,
             albumCover: song.album.images[0].url,
             artistName: song.artists[0].name,
-            placement: index + 2    // Accounts for currently playing and 1-based indexing for placement value
+            placement: index + 2,    // Accounts for currently playing and 1-based indexing for placement value
+            spotifyURL: song.external_urls.spotify
         }
+        // console.log(song.external_urls.spotify)
         queue.push(songObject);
     })
 

@@ -8,6 +8,7 @@ import { getSocketInstance, removeSocketInstance } from '@/src/socket/SocketMana
 import { v4 as uuidv4 } from "uuid";
 import { ProgressBar, millisecondsToString } from './progressbar';
 import { getValue } from '@/src/utils';
+import { EndSessionOverlay } from "@/src/app/session/[id]/EndSessionOverlay"
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
   return (
@@ -25,10 +26,9 @@ export function Session({
     isHost : boolean, sid : string, username : string,
     hostName : string, clientNames : string[], queue : any[], router : any
 }) {
-    
     // Create a non-changing socket
     const userSessionId = useRef(uuidv4()); // unique identifier per user session
-    const socket = getSocketInstance(sid, userSessionId.current, isHost).connect();
+    const socket = getSocketInstance(sid, userSessionId.current, isHost);  
 
     if(isHost)
         return <SessionHost 
@@ -55,12 +55,14 @@ export function Session({
 
 
 
-export function Song(songProps: { id: string, name: string, addedBy?: string, coverArtURL: string, artistName: string }) {
+export function Song(songProps: { id: string, name: string, addedBy?: string, coverArtURL: string, artistName: string, spotifyURL: string }) {
   const [songId, setSongId] = useState(songProps.id)
   const [songName, setSongName] = useState(songProps.name);
   const [addedBy, setAddedBy] = useState(songProps.addedBy);
   const [coverArtFile, setCoverArtFile] = useState(songProps.coverArtURL);
   const [artistName, setArtistName] = useState(songProps.artistName);
+  const [spotifyURL, setSpotifyURL] = useState(songProps.spotifyURL)
+
 
   return (
     <div className="song">
@@ -68,10 +70,16 @@ export function Song(songProps: { id: string, name: string, addedBy?: string, co
         <img src={coverArtFile} alt="" />
       </div>
       <div className="song-info">
-        <p>{songName}</p>
-        <p>{artistName}</p>
-        <p>{addedBy}</p>
+        <div className="song-text">
+          <div className="song-content">
+            <p>{songName}</p>
+            <p>{artistName}</p>
+            <p>{addedBy}</p>
+          </div>
+            <a href={spotifyURL} target="_blank" onClick={(e) => e.stopPropagation()}><img className="spotify-logo" src="../Spotify_Primary_Logo_RGB_Green.png" alt="Spotify logo"></img></a>
+        </div>
       </div>
+
 
     </div>
   );
@@ -95,23 +103,22 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-
-    if(isHost) {
-        socket.emit("AddedSong"); // This will force the websocket server to automatically update the queue when the host joins
-    }
-
     for (let i = 0; i < initQueue.length; i++) { // Initialize starting queue from connection
       const songData = {
-        songId: getValue(initQueue[i], 'songId'),
-        songName: getValue(initQueue[i], 'songName'),
-        albumCover: getValue(initQueue[i], 'albumCover'),
-        artistName: getValue(initQueue[i], 'artistName'),
-        placement: getValue(initQueue[i], 'placement'),
-    };
+            songId: getValue(initQueue[i], 'songId'),
+            songName: getValue(initQueue[i], 'songName'),
+            albumCover: getValue(initQueue[i], 'albumCover'),
+            artistName: getValue(initQueue[i], 'artistName'),
+            placement: getValue(initQueue[i], 'placement'),
+            spotifyURL: getValue(initQueue[i], 'spotifyURL')
+        };
 
       setSongList((prevSongs) => [...prevSongs, songData]);
     }
 
+    if(isHost) {
+        socket.emit("AddedSong"); // This will force the websocket server to automatically update the queue when the host joins
+    }
   }, [initQueue]);
 
     // Add song to end of the queue with all data needed for UI
@@ -131,7 +138,8 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                 songName: song.songName,
                 albumCover: song.albumCover,
                 artistName: song.artistName,
-                placement: index
+                placement: index,
+                spotifyURL: song.spotifyURL
             }))
 
         setSongList([...updatedQueue]);
@@ -140,31 +148,31 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
     socket.removeAllListeners("retrieveProgress");
     socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number, id : string}) => {
 
-    //calc percentage of the bar can change later if need be ---------
-    //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
-    console.log("seek, skip, or drift happened updating...");
+        //calc percentage of the bar can change later if need be ---------
+        //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
+        console.log("seek, skip, or drift happened updating...");
 
-    setIsPlaying(data.is_playing);
-    setProgress(data.progress_ms)
-    setSongLength(data.duration_ms);
-  });
+        setIsPlaying(data.is_playing);
+        setProgress(data.progress_ms)
+        setSongLength(data.duration_ms);
+    });
 
-    useEffect(() => {
+    useEffect(() => { // Progress bar initialization, should check if a song is currently playing, then start an interval
         let intervalId : any;
 
         if (isPlaying) {
-        intervalId = setInterval(() => {
-            setProgress((prev) => {
-            const newProgress = prev + 1000;
+            intervalId = setInterval(() => {
+                setProgress((prev) => {
+                const newProgress = prev + 1000;
 
-            if (newProgress >= songlength) {
-                clearInterval(intervalId);
-                return songlength;
-            }
+                if (newProgress >= songlength) {
+                    clearInterval(intervalId);
+                    return songlength;
+                }
 
-            return newProgress;
-            });
-        }, 1000);
+                return newProgress;
+                });
+            }, 1000);
         }
 
         return () => {
@@ -189,14 +197,6 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
         if (!response.ok) throw Error(response.statusText);
         return response.json();
     }).then((data) => {
-        const songData = 
-        {  
-            songId: songId,
-            songName: data.responseBody.songName,
-            albumCover: data.responseBody.albumCover,
-            artistName: data.responseBody.artistName, 
-            placement: data.responseBody.placement,
-        };
         // Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
         try {
             socket.emit('AddedSong');
@@ -233,14 +233,15 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
       // Update the selection of songs based on search input
       let tmp: any[] = [];
       for (let i = 0; i < data.song_results.length; i++) {
-        const songProps = {
-          songId: data.song_results[i].songId,
-          songName: data.song_results[i].songName,
-          user: username,
-          albumCover: data.song_results[i].albumCover,
-          artistName: data.song_results[i].artistName,
-        };
-        tmp[i] = songProps;
+            const songProps = {
+                songId: data.song_results[i].songId,
+                songName: data.song_results[i].songName,
+                user: username,
+                albumCover: data.song_results[i].albumCover,
+                artistName: data.song_results[i].artistName,
+                spotifyURL: data.song_results[i].spotifyURL
+            };
+            tmp[i] = songProps;
       }
       // Update UI component with new search data
       setSongQuery(tmp);
@@ -268,7 +269,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                 overflowX: 'hidden',
                 scrollbarWidth: 'none', 
                 }}>
-            <h1>Queue</h1>
+            <h1 className="queue-header">Queue</h1>
             <div id="SongList">
                 {songList.map((song) => (
                     <div key={`${song.songId}${song.placement}`}>
@@ -278,6 +279,7 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                         addedBy={song.user}
                         coverArtURL={song.albumCover}
                         artistName={song.artistName}
+                        spotifyURL={song.spotifyURL}
                     />
 
                     </div>
@@ -318,13 +320,13 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                     name={song.songName}
                     coverArtURL={song.albumCover}
                     artistName={song.artistName}
+                    spotifyURL={song.spotifyURL}
                     />
                 </button>
                 ))}
             </div>
         </div>
         {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
-    );
   </>
 )}
 
@@ -341,9 +343,8 @@ function SessionGuest( {hostName, clientNames, queue, username, socket, sid, rou
         router.push('/');
     };
 
-
     socket.on("SessionEnded", () => {
-        setOverlayVisible(true); // Show overlay
+        setOverlayVisible(true);
     })
 
   return (
@@ -365,7 +366,14 @@ function SessionGuest( {hostName, clientNames, queue, username, socket, sid, rou
           sid={sid}
         />
       </div>
-
+    {
+      isOverlayVisible ? 
+      <>
+        <EndSessionOverlay onReturnToHome={handleExit}/>
+      </> 
+      : <>
+      </>
+    }
     </>
   );
 }

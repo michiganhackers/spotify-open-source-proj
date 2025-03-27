@@ -11,3 +11,5 @@ export function EndSessionOverlay({ onReturnToHome }: { onReturnToHome: () => vo
     </div>
   );
 }
+
+export default EndSessionOverlay;
