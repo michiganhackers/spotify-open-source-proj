@@ -13,7 +13,7 @@ const controller = new WebSocketController(io);
 
 // let checkQueueUpdatesIntervals = new Map<string, any>();
 // var checkQueueUpdatesInterval : any;
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
 
     // Add user to the room (session) in which they want to connect
     const sid : string = socket.handshake.auth.token;  
@@ -23,7 +23,7 @@ io.on("connection", (socket) => {
     socket.join(sid);
 
     if(isHost === "true")
-        controller.addSessionInterval(sid);
+        await controller.addSessionInterval(sid);
     else
         controller.incrementUserCount(sid);
 
