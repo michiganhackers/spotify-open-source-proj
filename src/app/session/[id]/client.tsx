@@ -246,21 +246,37 @@ function Queue({
 
   // Basic timer to increment local progress while playing
   useEffect(() => {
-    let intervalId: any;
+    let intervalId: NodeJS.Timeout;
+    let syncInterval: NodeJS.Timeout;
+  
+    const updateProgress = () => {
+      setProgress(prev => {
+        const newProgress = prev + 500;
+        return newProgress >= songlength ? songlength : newProgress;
+      });
+    };
+  
     if (isPlaying) {
-      intervalId = setInterval(() => {
-        setProgress((prev) => {
-          const newProgress = prev + 1000;
-          if (newProgress >= songlength) {
-            clearInterval(intervalId);
-            return songlength;
-          }
-          return newProgress;
-        });
+      intervalId = setInterval(updateProgress, 500);
+      
+      // Add periodic server sync
+      syncInterval = setInterval(() => {
+        fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/state?sid=${sid}`)
+          .then(res => res.json())
+          .then(data => {
+            setIsPlaying(data.is_playing);
+            setProgress(data.progress_ms);
+            setSongLength(data.duration_ms);
+          });
       }, 1000);
     }
-    return () => clearInterval(intervalId);
-  }, [isPlaying, songlength]);
+  
+    return () => {
+      clearInterval(intervalId);
+      clearInterval(syncInterval);
+    };
+  }, [isPlaying, songlength, sid]);
+  
 
   // Add a song to the server/queue
   const handleAddSong = (songId: string) => {
@@ -321,13 +337,15 @@ function Queue({
 
   // Handlers for the “play/pause” and “skip” placeholders
   const handlePlayPause = () => {
-    // Send request to toggle playback
+    const newState = !isPlaying;
+    
+    // Send request to toggle playback with the correct parameter name
     fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/playPause`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sid: sid,
-        isPlaying: !isPlaying
+        state: newState  // Changed from isPlaying to state
       })
     })
     .then(response => {
@@ -344,10 +362,11 @@ function Queue({
     })
     .catch(error => {
       console.error('Play/pause error:', error);
-      // Optionally revert UI state
-      setIsPlaying(prev => !prev);
+      // Revert UI state if there was an error
+      setIsPlaying(!newState);
     });
   };
+  
   
   const handleSkip = () => {
     fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/skip`, {
