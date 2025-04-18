@@ -22,3 +22,10 @@ export function handleSpotifyAuth(client_id : string | undefined, redirect_uri :
 export function getValue(data: any, key: string) {
     return data[key] ?? data[key.replace(/([A-Z])/g, '_$1').toLowerCase()];
   }
+
+
+// General purpose sleep function
+export function sleep(seconds : number) {
+    const ms : number = seconds * 1000;
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

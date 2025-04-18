@@ -1,4 +1,7 @@
-import { DeleteSession, GetAccessToken, GetQueue, ReplaceQueue } from "../database/db"
+import { setMaxIdleHTTPParsers } from "http";
+import { DeleteSession, GetAccessToken, GetExpiration, GetQueue, IsValidSid, ReplaceQueue } from "../database/db"
+import { updateTokens } from "./refreshTokens";
+import { sleep } from "../../src/utils"
 
 // Goals for this class:
 //      - Create an instance of WebSocketController at top level of server.ts
@@ -27,7 +30,7 @@ export class WebSocketController {
 
 
     // Adds new {sid, intervalID} to checkQueueUpdatesIntervals
-    public addSessionInterval(sid : string) : void {
+    public async addSessionInterval(sid : string) : Promise<void> {
         // Check if session already exists, if it does, simply increment user cound
         if(this.checkQueueUpdatesIntervals.has(sid)) {
             this.incrementUserCount(sid);
@@ -35,6 +38,9 @@ export class WebSocketController {
         }
 
         this.currentSongProgress.set(sid, { progress: 0, lastUpdated: 0, isPlaying: false, duration: 0 });
+
+        // Set an interval to trigger before the expiration to create a new access token
+        this.createRefreshTokenTimeout(sid);
 
         // Calls checkQueueUpdates every 5 seconds
         let intervalID = setInterval(async () => {
@@ -87,7 +93,7 @@ export class WebSocketController {
                     console.log("Terminating session interval and database information");
                     this.destroySession(sid);
                 }
-            }, 60000)
+            }, 600000) // 10 minutes
         }
     }
 
@@ -214,5 +220,42 @@ export class WebSocketController {
         } catch (error) {
           console.error(`Failed to sync song progress for session ${sid}:`, error);
         }
-      }
+    }
+
+    // To be called every expires_in seconds, which is returned from original
+    // access_token request
+    private async updateAccessToken(sid : string) : Promise<void> {
+        let failCount = 0;
+        // Attempt to update token up to 3 times
+        while(failCount < 3 && !(await updateTokens(sid))) {
+            failCount++;
+            sleep(1)
+        }
+        if (failCount == 3) // If updateTokens fails 3 times, assume new token cannot be acquired
+            return;
+
+        await this.createRefreshTokenTimeout(sid); // Repeat cycle
+    }
+
+
+    private async createRefreshTokenTimeout(sid: string) : Promise<void> {
+        const now : any = new Date();
+        let expiration_str : string;
+        
+        if(await IsValidSid(sid)) {
+            expiration_str = await GetExpiration(sid);
+        }
+        else {
+            console.error("@@@ Failed to validate session: ", sid);
+            return; // Session has ended
+        }
+
+        const expiration : any = new Date(expiration_str)
+        const expires_in : number = (expiration - now) - 10000; // Difference in milliseconds (minus 10 seconds)
+        if(expires_in >= 0) {
+            setTimeout(async () => {
+                this.updateAccessToken(sid);
+            }, expires_in)
+        }
+    }
 };

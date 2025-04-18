@@ -4,6 +4,7 @@ CREATE TABLE sessions (
     host_id INT,
     access_token varchar(255),
     refresh_token varchar(255),
+    expiration varchar(255),
     PRIMARY KEY (session_id)
 );
 

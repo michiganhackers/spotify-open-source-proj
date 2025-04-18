@@ -78,7 +78,8 @@ export async function VerifyGuestCode(guestCode : string) : Promise<any> {
 
 export async function CreateSession(
     accessToken : string,
-    refreshToken : string) : Promise<any> {
+    refreshToken : string,
+    expiration : string) : Promise<any> {
 
     // Get all currently used session codes
     const codes : any[] = await sql`
@@ -107,8 +108,8 @@ export async function CreateSession(
     } while (!is_unique)
 
     await sql`
-    INSERT INTO sessions (session_id, access_token, refresh_token)
-    VALUES (${code}, ${accessToken}, ${refreshToken})
+    INSERT INTO sessions (session_id, access_token, refresh_token, expiration)
+    VALUES (${code}, ${accessToken}, ${refreshToken}, ${expiration})
     `
     return code;
 }
@@ -251,17 +252,6 @@ export async function DeleteSession(sid : string) : Promise<void> {
     
 export async function GetRefreshToken(sid : string) : Promise<any> {
 
-    /*
-    const tokens = await sql`
-    SELECT access_token, refresh_token FROM sessions
-    `
-
-    // Print both access_token and refresh_token
-    tokens.forEach(token => {
-        console.log('Access Token:', token.access_token);
-        console.log('Refresh Token:', token.refresh_token);
-    });*/
-
     const token = await sql`
         SELECT refresh_token FROM sessions
         WHERE session_id = ${sid}
@@ -279,24 +269,11 @@ export async function GetRefreshToken(sid : string) : Promise<any> {
 export async function UpdateTokens(
     accessToken : string,
     refreshToken : string,
+    expiration : string,
     sid : string) : Promise<any> {
 
-    // Get all currently used session codes
-    const codes : any[] = await sql`
-        SELECT session_id FROM sessions
-    `
-
-    let is_found = false;
-
-    for (let i = 0; i < codes.length; i++) {
-        if (sid === codes[i]['session_id']) {
-            is_found = true;
-            break;
-        }
-    }
-    
-    if (!is_found) {
-        throw new Error(`Session ID ${sid} not found.`);
+    if(!IsValidSid(sid)) {
+        throw new Error(`Invalid sid: ${sid}`);
     }
 
     const token = await sql`
@@ -307,17 +284,43 @@ export async function UpdateTokens(
     console.log("old token: ", token[0].access_token)
 
     await sql`
-    UPDATE sessions 
-    SET access_token = ${accessToken}, refresh_token = ${refreshToken}
-    WHERE session_id = ${sid}
+        UPDATE sessions 
+        SET access_token = ${accessToken}, refresh_token = ${refreshToken}, expiration = ${expiration}
+        WHERE session_id = ${sid}
     `;
 
-    const newtoken = await sql`
-        SELECT access_token FROM sessions
+    return sid;
+}
+
+
+export async function GetExpiration(sid: string) : Promise<string> {
+    if(!IsValidSid(sid)) {
+        throw new Error(`Invalid sid: ${sid}`);
+    }
+    
+    const expiration = await sql`
+        SELECT expiration
+        FROM sessions
         WHERE session_id = ${sid}
     `
 
-    console.log("new token: ", newtoken[0].access_token)
+    console.log("Expiration: " + expiration[0].expiration)
 
-    return sid;
+    return expiration[0].expiration
+}
+
+
+/****   HELPER DB FUNCTIONS BELOW    ****/
+
+export async function IsValidSid(sid: string) : Promise<boolean> {
+    // Get all currently used session codes
+    const codes : any[] = await sql`
+        SELECT session_id FROM sessions
+    `
+
+    if(!codes.find(code => code.session_id === sid)) {
+        return false;
+    }
+    
+    return true;
 }
