@@ -53,9 +53,10 @@ export function Session ({
 }
 
 // A new component for the "now playing" layout
-function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlength, isPlaying, onPlayPause, onSkip}: {
-  albumCover?: string; trackTitle?: string, artistName?: string, progress: number, songlength: number, isPlaying: boolean, onPlayPause: () => void, onSkip: () => void
+function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlength, isPlaying, isHost, onPlayPause, onSkip}: {
+  albumCover?: string; trackTitle?: string, artistName?: string, progress: number, songlength: number, isPlaying: boolean, isHost : boolean, onPlayPause: () => void, onSkip: () => void
 }) {
+
 
   return (
     <div
@@ -93,19 +94,19 @@ function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlengt
         )}
       </div>
 
-      {/* Track Title & Artist - row 1, column 2 */}
-      <div style={{ 
+    {/* Track Title & Artist - row 1, column 2 */}
+    <div style={{ 
         gridRow: 1,
         gridColumn: 2,
         textAlign: 'right'
-      }}>
+    }}>
         <h2 style={{ margin: '0 0 4px 0' }}>
-          {trackTitle || 'Track Title'}
+        {trackTitle || 'Track Title'}
         </h2>
         <p style={{ margin: 0 }}>
-          {artistName || 'Artist'}
+        {artistName || 'Artist'}
         </p>
-      </div>
+    </div>
 
       {/* Progress Section - row 2, column 2 */}
       <div style={{ 
@@ -125,22 +126,23 @@ function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlengt
         <p>Status: {isPlaying ? 'Playing' : 'Paused'}</p>
       </div>
 
-      {/* Play/Pause Buttons - row 3, full width */}
-      {/**** ASHTON: ADD BACK ONCE play/pause functionality is working, I tested and it wasn't being responsive in spotify client, also remember to only add for the Session_Host component ****/}
-      {/*
-      <div style={{ 
-        gridRow: 3,
-        gridColumn: '1 / -1', // Span all columns
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '10px',
-        marginTop: '15px'
-      }}>
-        <button onClick={onPlayPause}>
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
-        <button onClick={onSkip}>Skip</button>
-      </div> */}
+    {/* Play/Pause Buttons - row 3, full width */}
+    {isHost &&
+        <div style={{ 
+            gridRow: 3,
+            gridColumn: '1 / -1', // Span all columns
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '10px',
+            marginTop: '15px'
+        }}>
+            <button onClick={onPlayPause}>
+            {isPlaying ? 'Pause' : 'Play'}
+            </button>
+            <button onClick={onSkip}>Skip</button>
+        </div>
+    }
+    
     </div>
   );
 }
@@ -233,7 +235,6 @@ function Queue({isHost, initQueue, socket, username, sid
     // Listen for progress updates
     socket.removeAllListeners("retrieveProgress");
     socket.on("retrieveProgress", (data: {is_playing : boolean, progress_ms : number, duration_ms : number, id : string}) => {
-
         //calc percentage of the bar can change later if need be ---------
         //const percentage = Math.round((data.progress_ms / data.duration_ms) * 100)
         console.log("seek, skip, or drift happened updating...");
@@ -335,7 +336,7 @@ function Queue({isHost, initQueue, socket, username, sid
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             sid: sid,
-            isPlaying: !isPlaying
+            state: !isPlaying
         })
         })
         .then(response => {
@@ -410,6 +411,7 @@ function Queue({isHost, initQueue, socket, username, sid
           progress={progress}
           songlength={songlength}
           isPlaying={isPlaying}
+          isHost={isHost}
           onPlayPause={handlePlayPause}
           onSkip={handleSkip}
         />
