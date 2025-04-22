@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ProgressBar, millisecondsToString } from './progressbar';
 import { getValue } from '@/src/utils';
 import { EndSessionOverlay } from "@/src/app/session/[id]/EndSessionOverlay"
+import { Socket } from 'socket.io-client'
 
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
@@ -53,10 +54,9 @@ export function Session ({
 }
 
 // A new component for the "now playing" layout
-function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlength, isPlaying, isHost, onPlayPause, onSkip}: {
-  albumCover?: string; trackTitle?: string, artistName?: string, progress: number, songlength: number, isPlaying: boolean, isHost : boolean, onPlayPause: () => void, onSkip: () => void
+function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlength, isPlaying, isHost, socket, onPlayPause, onSkip}: {
+  albumCover?: string; trackTitle?: string, artistName?: string, progress: number, songlength: number, isPlaying: boolean, isHost : boolean, socket : any, onPlayPause: () => void, onSkip: () => void
 }) {
-
 
   return (
     <div
@@ -304,10 +304,6 @@ function Queue({isHost, initQueue, socket, username, sid
         .then((response) => {
             if (!response.ok) throw Error(response.statusText);
             return response.json();
-        })
-        .then((response) => {
-            if (!response.ok) throw Error(response.statusText);
-            return response.json();
         }).then((data) => {
             // Update the selection of songs based on search input
             let tmp: any[] = [];
@@ -323,6 +319,7 @@ function Queue({isHost, initQueue, socket, username, sid
                 tmp[i] = songProps;
             }
             // Update UI component with new search data
+            console.log(tmp)
             setSongQuery(tmp);
         }).catch((error) => console.log(error));
     };
@@ -360,13 +357,13 @@ function Queue({isHost, initQueue, socket, username, sid
         
     const handleSkip = () => {
         fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/skip`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid: sid })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sid: sid })
         })
         .then(response => {
-        if (!response.ok) throw new Error('Skip failed');
-        socket.emit('AddedSong'); // Refresh queue
+            if (!response.ok) throw new Error('Skip failed');
+            socket.emit('AddedSong'); // Refresh queue
         })
         .catch(error => console.error('Skip error:', error));
     };
@@ -412,6 +409,7 @@ function Queue({isHost, initQueue, socket, username, sid
           songlength={songlength}
           isPlaying={isPlaying}
           isHost={isHost}
+          socket={socket}
           onPlayPause={handlePlayPause}
           onSkip={handleSkip}
         />
@@ -430,7 +428,7 @@ function Queue({isHost, initQueue, socket, username, sid
         <h1 className="queue-header">Queue</h1>
         <div id="SongList">
           {upcomingQueue.map((song, index) => (
-            <div key={index}>
+            <div key={`${song.songId}${song.placement}`}>
               <Song
                 id={song.songId}
                 name={song.songName}
@@ -473,7 +471,7 @@ function Queue({isHost, initQueue, socket, username, sid
             scrollbarWidth: 'none', 
             }}>
                 {songQuery.map((song, index) => (
-                <button onClick={() => {handleAddSong(song.songId)}} key={index} className="lookup-song-button">
+                <button onClick={() => {handleAddSong(song.songId)}} key={`${song.songId}${song.placement}`} className="lookup-song-button">
                     <Song 
                     id={song.songId}
                     name={song.songName}
