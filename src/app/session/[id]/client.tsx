@@ -455,8 +455,7 @@ function Queue({isHost, initQueue, socket, username, sid
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSongInput(e.target.value)}
               onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 clearTimeout(timer);
-                const inputValue = e.currentTarget.value; // capture value before timeout
-
+                const inputValue = e.currentTarget.value;
                 timer = setTimeout(() => {
                   searchSongs(inputValue);
                 }, waitTime);
