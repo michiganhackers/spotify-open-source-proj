@@ -178,6 +178,7 @@ export function Song(songProps: { id: string, name: string, addedBy?: string, co
 
 function Queue({isHost, initQueue, socket, username, sid
 }: { isHost: boolean, initQueue: any[], socket: any,  username: string, sid: string}) {
+    const [songInput, setSongInput] = useState("");
     const [songList, setSongList] = useState<any[]>([]);
     const [songQuery, setSongQuery] = useState<any[]>([]);
     const [toastMessage, setToastMessage] = useState('');
@@ -273,24 +274,23 @@ function Queue({isHost, initQueue, socket, username, sid
             sid: sid,
             qlen: songList.length
         })
-        })
-        .then((response) => {
-            if (!response.ok) throw Error(response.statusText);
-            return response.json();
-        })
-        .then((data) => {
-            // Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
-            try {
-                socket.emit('AddedSong');
-            }
-            catch (error) {
-                console.error(error)
-            }
-            setToastMessage(` Successfully added: ${data.responseBody.songName}`);
-            setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
-        })
-        .catch((error) => console.log(error));
-    };
+    }).then((response) => {
+        if (!response.ok) throw Error(response.statusText);
+        return response.json();
+    }).then((data) => {
+        // Add Websocket event to tell server to automatically update queue bc song was successfully received by Spotify API
+        try {
+            socket.emit('AddedSong');
+        }
+        catch (error) {
+            console.error(error)
+        }
+      setToastMessage(` Successfully added: ${data.responseBody.songName}`);
+      setSongInput("");
+      setSongQuery([]);
+      setTimeout(() => setToastMessage(''), 3000); // Auto hide after 3 seconds
+    }).catch((error) => console.log(error))
+  };
 
     // For searching songs
     const searchSongs = (input: string) => {
@@ -440,49 +440,48 @@ function Queue({isHost, initQueue, socket, username, sid
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Search & Add songs */}
-      <div
-        id="QuerySongWrapper"
-        style={{
-          maxHeight: '500px',
-          overflowY: 'scroll',
-          overflowX: 'hidden',
-          scrollbarWidth: 'none',
-        }}
-      >
-        <div id="AddSong">
-          <input
-            type="text"
-            placeholder="Track Name"
-            onKeyUp={(e: any) => {
-              clearTimeout(timer);
-              timer = setTimeout(() => {
-                searchSongs(e.target.value);
-              }, waitTime);
-            }}
-          />
         </div>
+        
+        <div id="QuerySongWrapper" style={{ maxHeight: '500px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+            <div id="AddSong">
+            <input
+              type="text"
+              placeholder="Track Name"
+              value={songInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSongInput(e.target.value)}
+              onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                clearTimeout(timer);
+                const inputValue = e.currentTarget.value;
+                timer = setTimeout(() => {
+                  searchSongs(inputValue);
+                }, waitTime);
+              }}
+            />
+            </div>
 
-        <div id="dropdown" style={{ maxHeight: '600px', 
-            overflowY: 'scroll', 
-            overflowX: 'hidden',
-            scrollbarWidth: 'none', 
-            }}>
-                {songQuery.map((song, index) => (
-                <button onClick={() => {handleAddSong(song.songId)}} key={`${song.songId}${song.placement}`} className="lookup-song-button">
-                    <Song 
-                    id={song.songId}
-                    name={song.songName}
-                    coverArtURL={song.albumCover}
-                    artistName={song.artistName}
-                    spotifyURL={song.spotifyURL}
-                    />
-                </button>
-                ))}
+            <div id="dropdown" style={{ maxHeight: '600px', 
+              overflowY: 'scroll', 
+              overflowX: 'hidden',
+              scrollbarWidth: 'none', 
+              }}>
+                  {songQuery.map((song, index) => (
+                  <button onClick={() => {handleAddSong(song.songId)}} key={`${song.songId}${song.placement}`} className="lookup-song-button">
+                      <Song 
+                      id={song.songId}
+                      name={song.songName}
+                      coverArtURL={song.albumCover}
+                      artistName={song.artistName}
+                      spotifyURL={song.spotifyURL}
+                      />
+                  </button>
+                  ))}
             </div>
         </div>
+    
         {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
     </>
   );
