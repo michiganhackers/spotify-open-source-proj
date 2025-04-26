@@ -254,37 +254,15 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
     <>
 
         <div style={{ padding: '20px', color: 'rgb(166, 238, 166)' }}>
-                <h2>Song Progress Bar</h2>
+                <h2 style = {{ 'margin-bottom': '3px', color: 'white' }}>Song Progress Bar</h2>
                 <ProgressBar progress={progress} songlength={songlength} />
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <p>{millisecondsToString(progress)}</p>
-                <p>{millisecondsToString(songlength)}</p>
+                <p style={{color:'white'}}>{millisecondsToString(progress)}</p>
+                <p style={{color:'white'}}>{millisecondsToString(songlength)}</p>
                 </div>
-                <p>Status: {isPlaying ? 'Playing' : 'Paused'}</p>
-            </div>
-         
-        <div id="QueueWrapper" style={{ maxHeight: '500px', 
-                overflowY: 'scroll', 
-                overflowX: 'hidden',
-                scrollbarWidth: 'none', 
-                }}>
-            <h1>Queue</h1>
-            <div id="SongList">
-                {songList.map((song) => (
-                    <div key={`${song.songId}${song.placement}`}>
-                    <Song 
-                        id={song.songId}
-                        name={song.songName}
-                        addedBy={song.user}
-                        coverArtURL={song.albumCover}
-                        artistName={song.artistName}
-                    />
-
-                    </div>
-                ))}
+                <p style={{color: 'white'}}>Status: {isPlaying ? 'Playing' : 'Paused'}</p>
             </div>
         
-        </div>
         
         <div id="QuerySongWrapper" style={{ maxHeight: '500px', 
                 overflowY: 'scroll', 
@@ -322,6 +300,28 @@ function Queue({ isHost, initQueue, socket, username, sid }: { isHost : boolean,
                 </button>
                 ))}
             </div>
+        </div>
+        <div id="QueueWrapper" style={{ maxHeight: '500px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+            <h1>Queue</h1>
+            <div id="SongList">
+                {songList.map((song) => (
+                    <div key={`${song.songId}${song.placement}`}>
+                    <Song 
+                        id={song.songId}
+                        name={song.songName}
+                        addedBy={song.user}
+                        coverArtURL={song.albumCover}
+                        artistName={song.artistName}
+                    />
+
+                    </div>
+                ))}
+            </div>
+        
         </div>
         {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
     );

@@ -32,15 +32,15 @@ export default function Home() {
     // You can place any client-side specific logic here
   }, [toastMessage]); // Empty dependency array ensures the effect runs only once on mount
   return (
-    <main className="background flex min-h-screen flex-col items-center justify-between p-24">
-      <img src="GMJ-emblem-color.svg" alt="" />
-      <div className="options">
+    <main className="background flex min-h-screen flex-col items-center justify-around p-16">
+      <img src="GMJ-emblem-color.svg" className="homeImg" alt="" />
+      <div className="options font-poppins">
         <div className="hostoptions">
             <h1>I'm a host:</h1>
             <form data-testid="host-form">
-                <input type="text" placeholder='Username' maxLength={6} name="username" onChange={(e) => setHost(e.target.value)}/>
+                <input className="w-4/5" type="text" placeholder='Username' maxLength={6} name="username" onChange={(e) => setHost(e.target.value)}/>
             </form>
-            <button className="SubmitButton" onClick={() => {
+            <button className="SubmitButton w-4/5 mx-auto" onClick={() => {
               if(hostUsername == ""){
                 setToastMessage('Error: Username is blank.');
                 setHost('');
@@ -56,16 +56,16 @@ export default function Home() {
             </button>
         </div>
         <div className="divideDiv">
-          <hr className="divider"></hr>
+          <hr className="divider w-1/1"></hr>
         </div>
 
         <div className="guestoptions">
             <h1>I'm a guest:</h1>
             <form data-testid="guest-form">
-                <input type="text" placeholder='Guest Code' maxLength={8} name="guestcode" value={guestCode}   onChange={(e) => setGuestCode(e.target.value.toUpperCase())}/>
-                <input type="text" placeholder='Username' maxLength={25} name="username" onChange={(e) => setGuest(e.target.value)}/>
+                <input className="w-4/5" type="text" placeholder='Guest Code' maxLength={8} name="guestcode" value={guestCode}   onChange={(e) => setGuestCode(e.target.value.toUpperCase())}/>
+                <input className="w-4/5" type="text" placeholder='Username' maxLength={25} name="username" onChange={(e) => setGuest(e.target.value)}/>
             </form>
-            <button className="SubmitButton" onClick={() => {
+            <button className="SubmitButton w-4/5 mx-auto" onClick={() => {
                 sessionStorage.setItem("username", guestUsername);
                 // console.log(guestUsername);
                 sessionStorage.setItem("isHost", "false");
