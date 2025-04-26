@@ -483,6 +483,28 @@ function Queue({isHost, initQueue, socket, username, sid
                 ))}
             </div>
         </div>
+        <div id="QueueWrapper" style={{ maxHeight: '500px', 
+                overflowY: 'scroll', 
+                overflowX: 'hidden',
+                scrollbarWidth: 'none', 
+                }}>
+            <h1>Queue</h1>
+            <div id="SongList">
+                {songList.map((song) => (
+                    <div key={`${song.songId}${song.placement}`}>
+                    <Song 
+                        id={song.songId}
+                        name={song.songName}
+                        addedBy={song.user}
+                        coverArtURL={song.albumCover}
+                        artistName={song.artistName}
+                    />
+
+                    </div>
+                ))}
+            </div>
+        
+        </div>
         {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
     </>
   );
