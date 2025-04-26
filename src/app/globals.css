@@ -239,10 +239,14 @@ img {
   display: flex;
   transition: background-color 0.3s; 
 }
-
 .song:hover {
+  background-color: rgb(67, 67, 67);
+}
+
+.song:hover:not(:has(img.spotify-logo:hover)) {
   background-color: rgb(80, 80, 80);
 }
+
 
 .song:active {
   background-color: rgb(60, 60, 60);
@@ -263,10 +267,61 @@ img {
     flex: 2;
 }
 
-.song p {
-    text-align: right;
-    color: rgb(166, 238, 166);
+.song-text {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-direction: row;
+    height: 100%;
+}
+
+.song-content{
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  flex-direction: column;
+  
+}
+
+img.spotify-logo{
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  filter: brightness(70%);
+  border: 1px black solid;
+  margin-right: 10px;
+  transition: all 0.2s ease-in;
+  z-index:1000;
+}
+
+img.spotify-logo:hover{
+  filter: brightness(100%);
+  border: 1px white solid;
+  box-shadow: 2px 2px 5px black;
+  transition: all 0.1s ease-in;
+}
+
+.queue-header{
+  z-index: 1;
+}
+
+.song-text p {
+    text-align:left;
     padding-right: 5px;
+    color: rgb(166, 238, 166);
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Adjust spacing between lines */
+}
+
+.song p {
+    /*text-align: right;
+    padding-right: 5px;
+    color: rgb(166, 238, 166);
+    display: flex;
+    flex-direction: column;
+    gap: 5px; */
 }
 
 .container {
@@ -370,6 +425,7 @@ img {
     left: 0;
     width: 100%;
     height: 100%;
+    color: white;
     background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
     display: flex; /* Enable flexbox for centering */
     justify-content: center; /* Center horizontally */
@@ -378,9 +434,10 @@ img {
   }
   
   .end-session-overlay-content {
-    background-color: white;
+    background-color: rgb(50,50,50);
     padding: 20px 40px;
     border-radius: 10px;
+    border: 5px solid #5900ff;
     text-align: center;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
   }
@@ -393,9 +450,9 @@ img {
   
   .end-session-overlay-content button {
     padding: 10px 20px;
-    background-color: #007bff;
+    background-color: black;
+    border: 5px solid rgb(16, 161, 16); 
     color: white;
-    border: none;
     border-radius: 5px;
     font-size: 1rem;
     cursor: pointer;

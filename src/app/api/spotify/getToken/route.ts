@@ -26,6 +26,7 @@ export async function GET(req: Request) {
     // const state = reqUrl.searchParams.get('state');
 
     var accessToken, refreshToken : string;
+    var expires_in : Number;
     const tokenResponse = await fetch(TOKEN_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -45,12 +46,14 @@ export async function GET(req: Request) {
     const data = await tokenResponse.json();
     accessToken = data.access_token;
     refreshToken = data.refresh_token;
+    expires_in = data.expires_in;
 
     const createResponse = await fetch(process.env.APP_SERVER + '/api/sessionDB/create', { 
         method: 'POST',
         body: JSON.stringify({
             accessToken: accessToken,
-            refreshToken: refreshToken
+            refreshToken: refreshToken,
+            expires_in
         }) 
     })
     

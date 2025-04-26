@@ -1,6 +1,6 @@
 import postgres from 'postgres'
 import 'dotenv/config'
-
+import { cloneElement } from 'react'
 
 // const sql = postgres(process.env.PG_URI!)
 const sql = postgres({
@@ -78,7 +78,8 @@ export async function VerifyGuestCode(guestCode : string) : Promise<any> {
 
 export async function CreateSession(
     accessToken : string,
-    refreshToken : string) : Promise<any> {
+    refreshToken : string,
+    expiration : string) : Promise<any> {
 
     // Get all currently used session codes
     const codes : any[] = await sql`
@@ -107,8 +108,8 @@ export async function CreateSession(
     } while (!is_unique)
 
     await sql`
-    INSERT INTO sessions (session_id, access_token, refresh_token)
-    VALUES (${code}, ${accessToken}, ${refreshToken})
+    INSERT INTO sessions (session_id, access_token, refresh_token, expiration)
+    VALUES (${code}, ${accessToken}, ${refreshToken}, ${expiration})
     `
     return code;
 }
@@ -246,4 +247,80 @@ export async function DeleteSession(sid : string) : Promise<void> {
     if(results[0].length === 0) {
         throw new Error("sid does not exist")
     }
+}
+
+    
+export async function GetRefreshToken(sid : string) : Promise<any> {
+
+    const token = await sql`
+        SELECT refresh_token FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    if(token.length < 1) {
+        throw Error("Undefined session id")
+    }
+
+    console.log("refreshtoken: ", token[0].refresh_token)
+
+    return token[0].refresh_token;
+}
+
+export async function UpdateTokens(
+    accessToken : string,
+    refreshToken : string,
+    expiration : string,
+    sid : string) : Promise<any> {
+
+    if(!IsValidSid(sid)) {
+        throw new Error(`Invalid sid: ${sid}`);
+    }
+
+    const token = await sql`
+        SELECT access_token FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    console.log("old token: ", token[0].access_token)
+
+    await sql`
+        UPDATE sessions 
+        SET access_token = ${accessToken}, refresh_token = ${refreshToken}, expiration = ${expiration}
+        WHERE session_id = ${sid}
+    `;
+
+    return sid;
+}
+
+
+export async function GetExpiration(sid: string) : Promise<string> {
+    if(!IsValidSid(sid)) {
+        throw new Error(`Invalid sid: ${sid}`);
+    }
+    
+    const expiration = await sql`
+        SELECT expiration
+        FROM sessions
+        WHERE session_id = ${sid}
+    `
+
+    console.log("Expiration: " + expiration[0].expiration)
+
+    return expiration[0].expiration
+}
+
+
+/****   HELPER DB FUNCTIONS BELOW    ****/
+
+export async function IsValidSid(sid: string) : Promise<boolean> {
+    // Get all currently used session codes
+    const codes : any[] = await sql`
+        SELECT session_id FROM sessions
+    `
+
+    if(!codes.find(code => code.session_id === sid)) {
+        return false;
+    }
+    
+    return true;
 }
