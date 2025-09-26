@@ -52,8 +52,10 @@ PG_URI="postgres://dev:<your-password>@localhost:5432/dev"
 PG_USER="dev"
 PG_PASSWORD="<your-password>"
 
+NEXT_PUBLIC_APP_SERVER="http://127.0.0.1:3000"
 APP_SERVER="http://127.0.0.1:3000"
-WS_SERVER="http://localhost:8080"
+NEXT_PUBLIC_WS_SERVER="http://127.0.0.1:8080"
+WS_SERVER="http://127.0.0.1:8080"
 WS_STARTUP="node --loader ts-node/esm src/socket/server.ts"
 
 NEXT_PUBLIC_SPOTIFY_CLIENT_ID="<your-spotify-client-id>"
