@@ -1,20 +1,16 @@
 import { stringify } from 'querystring';
 
 
-export function handleSpotifyAuth(client_id : string | undefined, redirect_uri : string | undefined, scope : string | undefined) {
+export async function handleSpotifyAuth(client_id : string | undefined, redirect_uri : string | undefined, scope : string | undefined) {
 
-    const generateRandomString = function(length : number){
-        return Math.random().toString(20).substring(2, length + 2)
-    }
-
-    var state = generateRandomString(16); // TODO: Needs to be verified by /api/spotify/getToken
-    console.log(state);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/spotify/setState`)
+    const data = await response.json()
     window.location.href = `https://accounts.spotify.com/authorize?${stringify({
         response_type: 'code',
         client_id: client_id,
         scope: scope,
         redirect_uri: redirect_uri,
-        state: state
+        state: data.state
     })}`
 }
 
