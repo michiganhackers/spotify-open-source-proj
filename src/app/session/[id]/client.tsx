@@ -137,9 +137,11 @@ function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlengt
             marginTop: '15px'
         }}>
             <button onClick={onPlayPause}>
-            {isPlaying ? 'Pause' : 'Play'}
+                {isPlaying ? 'Pause' : 'Play'}
             </button>
             <button onClick={onSkip}>Skip</button>
+            <button onClick={() => {}}>Like</button>
+            <button onClick={() => {}}>Vote to Skip</button>
         </div>
     }
     
