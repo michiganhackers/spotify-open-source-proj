@@ -467,7 +467,28 @@ img.spotify-logo:hover{
     background-color: #0056b3;
   }
 /* -------------------- */
+#skipVoteBttn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+#skipVoteBttn span { 
+  display:none;
+}
 
+#skipVoteBttn:hover span{
+   display: inline;
+  color: white; 
+}
+
+.ButtonStyle  img {
+  width: 32px; 
+  height: 32px;
+}
 /*Desktop&Mac Specific*/
 @media only screen and (min-width: 1290px) {
     /* .guestoptions {

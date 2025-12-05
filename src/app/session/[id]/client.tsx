@@ -7,8 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import { ProgressBar, millisecondsToString } from './progressbar';
 import { getValue } from '@/src/utils';
 import { EndSessionOverlay } from "@/src/app/session/[id]/EndSessionOverlay"
-import { Socket } from 'socket.io-client'
-
+import { Socket } from 'socket.io-client';
+import Image from "next/image";
 
 const Toast: React.FC<{ message: string; onClose: () => void; }> = ({ message, onClose }) => {
   return (
@@ -54,8 +54,8 @@ export function Session ({
 }
 
 // A new component for the "now playing" layout
-function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlength, isPlaying, isHost, socket, onPlayPause, onSkip}: {
-  albumCover?: string; trackTitle?: string, artistName?: string, progress: number, songlength: number, isPlaying: boolean, isHost : boolean, socket : any, onPlayPause: () => void, onSkip: () => void
+function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlength, isPlaying, isHost, socket, onPlayPause, onLike,VotetoSkip}: {
+  albumCover?: string; trackTitle?: string, artistName?: string, progress: number, songlength: number, isPlaying: boolean, isHost : boolean, socket : any, onPlayPause: () => void, onLike: () => void,  VotetoSkip: () => void
 }) {
 
   return (
@@ -131,17 +131,23 @@ function NowPlayingCard({albumCover, trackTitle, artistName, progress, songlengt
         <div style={{ 
             gridRow: 3,
             gridColumn: '1 / -1', // Span all columns
-            display: 'flex',
+            display: 'flex', 
             justifyContent: 'center',
             gap: '10px',
             marginTop: '15px'
-        }}>
+        }}> 
+      
             <button onClick={onPlayPause}>
-                {isPlaying ? 'Pause' : 'Play'}
+                {isPlaying ?  ( <Image src="/icons/pause.svg" alt="pause" width={32} height={32} />):( <Image src="/icons/play.svg" alt="play" width={32} height={32} />)  }
+            </button>  
+
+          
+            <button className="ButtonStyle" onClick={() => {}}>
+                 <img src="/icons/likebttn.svg"/>
             </button>
-            <button onClick={onSkip}>Skip</button>
-            <button onClick={() => {}}>Like</button>
-            <button onClick={() => {}}>Vote to Skip</button>
+            <button className="ButtonStyle" id="skipVoteBttn" onClick={() => {}}>
+              <img src="/icons/voteskip.svg" alt="vote to skip"/>
+              <span>Vote to Skip</span></button>
         </div>
     }
     
@@ -369,7 +375,16 @@ function Queue({isHost, initQueue, socket, username, sid
         })
         .catch(error => console.error('Skip error:', error));
     };
-    
+    const handleLikeSong = () => {  fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/sessionDB/toggleLike`, {
+      //im not really sure what goes here for now? 
+
+     }
+    )};
+    const handleVotetoSkip = () => {  fetch(`${process.env.NEXT_PUBLIC_APP_SERVER}/api/sessionDB/toggleVoteToSkip`, {
+      //im not really sure what goes here for now? 
+      
+     }
+    )};
     useEffect(() => {
         const playbackUpdateHandler = (data: {
         is_playing: boolean;
@@ -413,7 +428,8 @@ function Queue({isHost, initQueue, socket, username, sid
           isHost={isHost}
           socket={socket}
           onPlayPause={handlePlayPause}
-          onSkip={handleSkip}
+          onLike={handleLikeSong}
+          VotetoSkip={handleVotetoSkip}
         />
       )}
 
